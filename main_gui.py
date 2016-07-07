@@ -21,6 +21,8 @@ from OCC.TopTools import Handle_TopTools_HSequenceOfShape
 from OCC.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
+from ifc_products import Slab
+
 
 class GuiMainWindow(QtGui.QMainWindow):
     def __init__(self, *args):
@@ -46,6 +48,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.ifc_file = None
         self.products = []
         self.section_planes = []
+        self.elements = []
 
     def setup_ifcopenshell_viewer(self, _app):
         display = self.canvas.get_display()
@@ -127,6 +130,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         else:
             print "drawing mode already On"
 
+
     def open_file(self):
         from Tkinter import Tk
         import tkFileDialog
@@ -136,12 +140,21 @@ class GuiMainWindow(QtGui.QMainWindow):
         root.destroy()
         from os.path import isfile
         if isfile(file_name):
-            self.close_file() # reset the program
+            self.close_file()  # reset the program
             self.products = []
             self.ifc_file = ifcopenshell.open(str(file_name))
-            self.display_ifc_file()
+            self.process_file()
+            # self.display_ifc_file()
         else:
             print "No file opened"
+        self.display_products()
+
+    def process_file(self):
+        products = self.ifc_file.by_type("IfcProduct")
+        for product in products:
+            if product.is_a("IfcSlab"):
+                slab = Slab(self.ifcopenshell_setting, product)
+                self.elements.append(slab)
 
     def close_file(self):
         # clear section plane if exist
@@ -167,6 +180,12 @@ class GuiMainWindow(QtGui.QMainWindow):
                 shape = ifcopenshell.geom.create_shape(self.ifcopenshell_setting, product).geometry
                 model_display = display.DisplayShape(shape, transparency=0.5)
                 self.products.append((product, shape, model_display))
+        display.FitAll()
+
+    def display_products(self):
+        display = self.canvas.get_display()
+        for element in self.elements:
+            element.display_shape(display)
         display.FitAll()
 
     def generate_section_plane(self):
@@ -220,7 +239,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         return curve_param
 
     def process_section(self):
-        #self.coba_01()
+        # self.coba_01()
         for section_plane in self.section_planes:
             section_plane_face = section_plane[1]
             for product in self.products:
