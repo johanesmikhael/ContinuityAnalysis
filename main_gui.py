@@ -21,7 +21,9 @@ from OCC.TopTools import Handle_TopTools_HSequenceOfShape
 from OCC.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
-from ifc_products import Slab
+from ifcproducts import Slab
+
+from ifcmaterials import *
 
 
 class GuiMainWindow(QtGui.QMainWindow):
@@ -49,6 +51,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.products = []
         self.section_planes = []
         self.elements = []
+        self.material_dict = MaterialDict()
 
     def setup_ifcopenshell_viewer(self, _app):
         display = self.canvas.get_display()
@@ -130,7 +133,6 @@ class GuiMainWindow(QtGui.QMainWindow):
         else:
             print "drawing mode already On"
 
-
     def open_file(self):
         from Tkinter import Tk
         import tkFileDialog
@@ -153,7 +155,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         products = self.ifc_file.by_type("IfcProduct")
         for product in products:
             if product.is_a("IfcSlab"):
-                slab = Slab(self.ifcopenshell_setting, product)
+                slab = Slab(self, product)
                 self.elements.append(slab)
 
     def close_file(self):
@@ -258,6 +260,9 @@ class GuiMainWindow(QtGui.QMainWindow):
                         edges.Append(edge)
                     ShapeAnalysis_FreeBounds.ConnectEdgesToWires(edges_handle, 1e-5, True, wires_handle)
                     wires = wires_handle.GetObject()
+
+    def get_material_dict(self):
+        return self.material_dict;
 
     def coba_01(self):
         for product in self.products:
