@@ -21,7 +21,7 @@ from OCC.TopTools import Handle_TopTools_HSequenceOfShape
 from OCC.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
-from ifcproducts import Slab
+from ifcproducts import *
 
 from ifcmaterials import *
 
@@ -157,6 +157,15 @@ class GuiMainWindow(QtGui.QMainWindow):
             if product.is_a("IfcSlab"):
                 slab = Slab(self, product)
                 self.elements.append(slab)
+                pass
+            if product.is_a("IfcWall"):
+                wall = Wall(self, product)
+                self.elements.append(wall)
+                pass
+            if product.is_a("IfcColumn"):
+                column = Column(self, product)
+                self.elements.append(column)
+                pass
 
     def close_file(self):
         # clear section plane if exist
