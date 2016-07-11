@@ -2,6 +2,7 @@ class Material(object):
     def __init__(self, ifc_material):
         self.ifc_material = ifc_material
         self.name = self.ifc_material.Name
+        self.surface_style_name = None
         self.surface_colour = None
         self.transparency = None
         self.diffuse_colour = None
@@ -15,6 +16,7 @@ class Material(object):
             style_select = style_assignement.Styles[0]
             if style_select.is_a("IfcSurfaceStyle"):
                 surface_style_element_select = style_select.Styles[0]
+                self.surface_style_name = style_select.Name
                 if surface_style_element_select.is_a("IfcSurfaceStyleShading"):
                     self.surface_colour = Material.get_rgb_tuple(surface_style_element_select.SurfaceColour)
                     self.transparency = surface_style_element_select.Transparency
@@ -66,6 +68,7 @@ class MaterialLayer(object):
 class MaterialDict(object):
     def __init__(self):
         self.material_dict = dict()
+        self.material_dict_by_surface_style = dict()
 
     def add_material(self, *args):
         ifc_material = args[0]
@@ -81,12 +84,20 @@ class MaterialDict(object):
             self.material_dict[material_name] = material
             return material
 
+    def add_material_by_style(self, material):
+        self.material_dict_by_surface_style[material.surface_style_name] = material
+
     def get_material(self, *args):
         material_name = args[0]
-        return self.material_dict.get(material_name, default=None)
+        return self.material_dict.get(material_name)
+
+    def get_material_by_surface_style(self, *args):
+        surface_style_name = args[0]
+        return self.material_dict_by_surface_style.get(surface_style_name)
 
     def get_material_information(self, ifc_instance):
         associations = ifc_instance.HasAssociations
+        print associations
         material_association = None
         for association in associations:
             if association.is_a("IfcRelAssociatesMaterial"):
@@ -95,6 +106,8 @@ class MaterialDict(object):
         if material_association is None:
             return
         relating_material = material_association.RelatingMaterial
+        print relating_material
+        print "Relating Material Properties Type : %s" % relating_material.is_a()
         if relating_material.is_a("IfcMaterialLayerSetUsage"):
             material_layers = self.get_material_layers_from_set_usage(relating_material)
             return "IfcMaterialLayerSetUsage", material_layers
@@ -103,6 +116,8 @@ class MaterialDict(object):
         elif relating_material.is_a("IfcMaterialLayer"):
             pass
         elif relating_material.is_a("IfcMaterialList"):
+            material_list = self.get_material_list(relating_material)
+            return "IfcMaterialList", material_list
             pass
         elif relating_material.is_a("IfcMaterial"):
             material = self.add_material(relating_material)
@@ -110,6 +125,14 @@ class MaterialDict(object):
             pass
         else:
             return None
+
+    def get_material_list(self, relating_material):
+        material_list = []
+        for ifc_material in relating_material.Materials:
+            print ifc_material
+            material = self.add_material(ifc_material)
+            material_list.append(material)
+        return material_list
 
     def get_material_layers_from_set_usage(self, relating_material):
         material_layer_set = relating_material.ForLayerSet

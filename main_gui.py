@@ -152,20 +152,35 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.display_products()
 
     def process_file(self):
-        products = self.ifc_file.by_type("IfcProduct")
+        products = self.ifc_file.by_type("IfcElement")
         for product in products:
-            if product.is_a("IfcSlab"):
-                slab = Slab(self, product)
-                self.elements.append(slab)
-                pass
-            if product.is_a("IfcWall"):
-                wall = Wall(self, product)
-                self.elements.append(wall)
-                pass
-            if product.is_a("IfcColumn"):
-                column = Column(self, product)
-                self.elements.append(column)
-                pass
+            is_decompose = BuildingElement.check_ifc_is_decompose(product)
+            if not is_decompose:
+                if product.is_a("IfcSlab"):
+                    slab = Slab(self, product)
+                    self.elements.append(slab)
+                    pass
+                if product.is_a("IfcWall"):
+                    wall = Wall(self, product)
+                    self.elements.append(wall)
+                    pass
+                if product.is_a("IfcColumn"):
+                    column = Column(self, product)
+                    self.elements.append(column)
+                    pass
+                if product.is_a("IfcCovering"):
+                    covering = Covering(self, product)
+                    self.elements.append(covering)
+                    pass
+                if product.is_a("IfcCurtainWall"):
+                    curtain_wall = CurtainWall(self, product)
+                    self.elements.append(curtain_wall)
+                    pass
+                if product.is_a("IfcDoor"):
+                    print product
+                    door = Door(self, product)
+                    self.elements.append(door)
+                    pass
 
     def close_file(self):
         # clear section plane if exist
@@ -174,24 +189,6 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.clear_section_path()
         # clear ifc products
         self.clear_products()
-
-    def display_ifc_file(self):
-        products = self.ifc_file.by_type('IfcProduct')
-        display = self.canvas.get_display()
-        for product in products:
-            # print "ee------------------------------------------ee"
-            # print product
-            # print product.GlobalId
-            # print product.OwnerHistory
-            # print product.Name
-            # print product.ObjectType
-            # print product.ObjectPlacement
-            # print product.ReferencedBy
-            if product.Representation is not None:
-                shape = ifcopenshell.geom.create_shape(self.ifcopenshell_setting, product).geometry
-                model_display = display.DisplayShape(shape, transparency=0.5)
-                self.products.append((product, shape, model_display))
-        display.FitAll()
 
     def display_products(self):
         display = self.canvas.get_display()
