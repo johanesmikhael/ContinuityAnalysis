@@ -29,9 +29,9 @@ class Material(object):
         else:
             return 0.125, 0.125, 0.125
 
-    def get_shading_colour(self): #reduced colour scale to prevent overbright
+    def get_shading_colour(self):  # reduced colour scale to prevent overbright
         r, g, b = self.get_surface_colour()
-        return 0.4*r, 0.4*g, 0.4*b
+        return 0.4 * r, 0.4 * g, 0.4 * b
 
     def get_transparency(self):
         if self.transparency:
@@ -97,7 +97,6 @@ class MaterialDict(object):
 
     def get_material_information(self, ifc_instance):
         associations = ifc_instance.HasAssociations
-        print associations
         material_association = None
         for association in associations:
             if association.is_a("IfcRelAssociatesMaterial"):
@@ -106,8 +105,6 @@ class MaterialDict(object):
         if material_association is None:
             return
         relating_material = material_association.RelatingMaterial
-        print relating_material
-        print "Relating Material Properties Type : %s" % relating_material.is_a()
         if relating_material.is_a("IfcMaterialLayerSetUsage"):
             material_layers = self.get_material_layers_from_set_usage(relating_material)
             return "IfcMaterialLayerSetUsage", material_layers

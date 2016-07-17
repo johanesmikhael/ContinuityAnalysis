@@ -6,7 +6,6 @@ from PyQt4 import QtGui, QtCore
 from ifc_viewer_widget import IfcViewerWidget
 
 from ifcopenshell.geom import occ_utils
-import ifcopenshell
 
 # from OCC.Utils import Topo
 from OCC import V3d
@@ -53,6 +52,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.elements = []
         self.material_dict = MaterialDict()
 
+    # noinspection PyBroadException
     def setup_ifcopenshell_viewer(self, _app):
         display = self.canvas.get_display()
 
@@ -157,31 +157,56 @@ class GuiMainWindow(QtGui.QMainWindow):
             is_decompose = BuildingElement.check_ifc_is_decompose(product)
             if not is_decompose:
                 if product.is_a("IfcSlab"):
-                    slab = Slab(self, product)
+                    slab = element_select.create(self, product)
                     self.elements.append(slab)
                     pass
                 if product.is_a("IfcWall"):
-                    wall = Wall(self, product)
+                    wall = element_select.create(self, product)
                     self.elements.append(wall)
                     pass
                 if product.is_a("IfcColumn"):
-                    column = Column(self, product)
+                    column = element_select.create(self, product)
                     self.elements.append(column)
                     pass
+                if product.is_a("IfcBeam"):
+                    beam = element_select.create(self,product)
+                    self.elements.append(beam)
+                    pass
                 if product.is_a("IfcCovering"):
-                    covering = Covering(self, product)
+                    covering = element_select.create(self, product)
                     self.elements.append(covering)
                     pass
                 if product.is_a("IfcCurtainWall"):
-                    curtain_wall = CurtainWall(self, product)
+                    curtain_wall = element_select.create(self, product)
                     self.elements.append(curtain_wall)
                     pass
                 if product.is_a("IfcDoor"):
-                    print product
-                    door = Door(self, product)
+                    door = element_select.create(self, product)
                     self.elements.append(door)
                     pass
+                if product.is_a("IfcWindow"):
+                    window = element_select.create(self, product)
+                    self.elements.append(window)
+                    pass
+                if product.is_a("IfcRailing"):
+                    railing = element_select.create(self, product)
+                    self.elements.append(railing)
+                    pass
+                if product.is_a("IfcStair"):
+                    stair = element_select.create(self, product)
+                    self.elements.append(stair)
+                    pass
+                if product.is_a("IfcRamp"):
+                    print "RAMP IS EXIST"
+                    pass
+                if product.is_a("IfcRoof"):
+                    roof = element_select.create(self, product)
+                    self.elements.append(roof)
+                    pass
+                if product.is_a("IfcFurnishingElement"):
+                    print "ADA FURNITURE BRROOOOO"
 
+                    pass
     def close_file(self):
         # clear section plane if exist
         self.clear_crv_sections()
@@ -237,7 +262,7 @@ class GuiMainWindow(QtGui.QMainWindow):
     @staticmethod
     def divide_curve(crv, distance):
         geom_adaptor_curve = GeomAdaptor_Curve(crv.GetHandle())
-        curve_param = [0]
+        curve_param = [0.0]
         param = 0
         while param < 1:
             gcpnts_abscissa_point = GCPnts_AbscissaPoint(geom_adaptor_curve, distance, param)
@@ -265,55 +290,8 @@ class GuiMainWindow(QtGui.QMainWindow):
                         edge_list_iterator.Next()
                         edges.Append(edge)
                     ShapeAnalysis_FreeBounds.ConnectEdgesToWires(edges_handle, 1e-5, True, wires_handle)
-                    wires = wires_handle.GetObject()
+                    # wires = wires_handle.GetObject()
 
     def get_material_dict(self):
-        return self.material_dict;
+        return self.material_dict
 
-    def coba_01(self):
-        for product in self.products:
-            associations = product[0].HasAssociations
-            print "product type:"
-            print product[0].is_a()
-            print product[0].Name
-            for association in associations:
-                materials = association.RelatingMaterial
-                if materials.is_a("IfcMaterial"):
-                    print "relating material type: IfcMaterial"
-                    pass
-                elif materials.is_a("IfcMaterialList"):
-                    print "relating material type:IfcMaterialList"
-                    pass
-                elif materials.is_a("IfcMaterialLayer"):
-                    print "relating material type:IfcMaterialLayer"
-                    pass
-                elif materials.is_a("IfcMaterialLayerSet"):
-                    print "relating material type:IfcMaterialLayerSet"
-                    pass
-                elif materials.is_a("IfcMaterialLayerSetUsage"):
-                    print "relating material type:IfcMaterialLayerSetUsage"
-                    representations = product[0].Representation.Representations
-                    '''for representation in representations:
-                        print representation
-                        print representation.ContextOfItems
-                        print representation.ContextOfItems.ParentContext
-                        print representation.ContextOfItems.ParentContext.TrueNorth
-                        print representation.ContextOfItems.ParentContext.TrueNorth.DirectionRatio
-                        print representation.RepresentationIdentifier
-                        print representation.RepresentationType
-                        print representation.Items
-                        for item in representation.Items:
-                            if representation.RepresentationIdentifier == "Axis":
-                                print "axis"
-                                print item
-                        print representation.RepresentationMap
-                        print representation.LayerAssignments
-                        print representation.OfProductRepresentation'''
-                    placement = product[0].ObjectPlacement
-                    print placement
-                    print placement.RelativePlacement
-                    print placement.RelativePlacement.RefDirection
-                    print materials.LayerSetDirection
-                    for material in materials.ForLayerSet.MaterialLayers:
-                        print material.Material.Name
-                        print material.LayerThickness

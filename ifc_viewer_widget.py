@@ -18,7 +18,7 @@ class IfcViewerWidget(qtViewer3d):
         self._path_pts = []
         self._path_curve = [None, None]
         self._preview_curve = [None, None]
-        self.path_height = 1;
+        self.path_height = 1
 
     def InitDriver(self):
         super(IfcViewerWidget, self).InitDriver()
@@ -99,8 +99,7 @@ class IfcViewerWidget(qtViewer3d):
             self._display.Rotation(pt.x, pt.y)
             self._drawbox = False
         # DYNAMIC ZOOM
-        elif (buttons == QtCore.Qt.RightButton and
-                  not modifiers == QtCore.Qt.ShiftModifier):
+        elif buttons == QtCore.Qt.RightButton and not modifiers == QtCore.Qt.ShiftModifier:
             self._display.Repaint()
             self._display.DynamicZoom(abs(self.dragStartPos.x),
                                       abs(self.dragStartPos.y), abs(pt.x),
@@ -118,13 +117,11 @@ class IfcViewerWidget(qtViewer3d):
             self._drawbox = False
         # DRAW BOX
         # ZOOM WINDOW
-        elif (buttons == QtCore.Qt.RightButton and
-                      modifiers == QtCore.Qt.ShiftModifier):
+        elif buttons == QtCore.Qt.RightButton and modifiers == QtCore.Qt.ShiftModifier:
             self._zoom_area = True
             self.DrawBox(event)
         # SELECT AREA
-        elif (buttons == QtCore.Qt.LeftButton and
-                      modifiers == QtCore.Qt.ShiftModifier):
+        elif buttons == QtCore.Qt.LeftButton and modifiers == QtCore.Qt.ShiftModifier:
             self._select_area = True
             self.DrawBox(event)
         else:
