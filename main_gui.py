@@ -47,7 +47,6 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.ifcopenshell_setting = ifcopenshell.geom.settings()
         self.ifcopenshell_setting.set(self.ifcopenshell_setting.USE_PYTHON_OPENCASCADE, True)
         self.ifc_file = None
-        self.products = []
         self.section_planes = []
         self.elements = []
         self.material_dict = MaterialDict()
@@ -123,6 +122,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.add_function_to_toolbar("Main Toolbar", self.draw_path)
         self.add_function_to_toolbar("Main Toolbar", self.generate_section_plane)
         self.add_function_to_toolbar("Main Toolbar", self.process_section)
+        self.add_function_to_toolbar("Main Toolbar", self.foo)
 
     def draw_path(self):
         if self.ifc_file is None:
@@ -143,86 +143,102 @@ class GuiMainWindow(QtGui.QMainWindow):
         from os.path import isfile
         if isfile(file_name):
             self.close_file()  # reset the program
-            self.products = []
+            self.elements = []
             self.ifc_file = ifcopenshell.open(str(file_name))
             self.process_file()
             # self.display_ifc_file()
         else:
             print "No file opened"
-        self.display_products()
+        self.display_elements()
 
     def process_file(self):
-        products = self.ifc_file.by_type("IfcElement")
-        for product in products:
-            is_decompose = BuildingElement.check_ifc_is_decompose(product)
+        elements = self.ifc_file.by_type("IfcElement")
+        for element in elements:
+            is_decompose = BuildingElement.check_ifc_is_decompose(element)
             if not is_decompose:
-                if product.is_a("IfcSlab"):
-                    slab = element_select.create(self, product)
+                if element.is_a("IfcSlab"):
+                    slab = element_select.create(self, element)
                     self.elements.append(slab)
                     pass
-                if product.is_a("IfcWall"):
-                    wall = element_select.create(self, product)
+                if element.is_a("IfcWall"):
+                    wall = element_select.create(self, element)
                     self.elements.append(wall)
                     pass
-                if product.is_a("IfcColumn"):
-                    column = element_select.create(self, product)
+                if element.is_a("IfcColumn"):
+                    column = element_select.create(self, element)
                     self.elements.append(column)
                     pass
-                if product.is_a("IfcBeam"):
-                    beam = element_select.create(self,product)
+                if element.is_a("IfcBeam"):
+                    beam = element_select.create(self, element)
                     self.elements.append(beam)
                     pass
-                if product.is_a("IfcCovering"):
-                    covering = element_select.create(self, product)
+                if element.is_a("IfcCovering"):
+                    covering = element_select.create(self, element)
                     self.elements.append(covering)
                     pass
-                if product.is_a("IfcCurtainWall"):
-                    curtain_wall = element_select.create(self, product)
+                if element.is_a("IfcCurtainWall"):
+                    curtain_wall = element_select.create(self, element)
                     self.elements.append(curtain_wall)
                     pass
-                if product.is_a("IfcDoor"):
-                    door = element_select.create(self, product)
+                if element.is_a("IfcDoor"):
+                    door = element_select.create(self, element)
                     self.elements.append(door)
                     pass
-                if product.is_a("IfcWindow"):
-                    window = element_select.create(self, product)
+                if element.is_a("IfcWindow"):
+                    window = element_select.create(self, element)
                     self.elements.append(window)
                     pass
-                if product.is_a("IfcRailing"):
-                    railing = element_select.create(self, product)
+                if element.is_a("IfcRailing"):
+                    railing = element_select.create(self, element)
                     self.elements.append(railing)
                     pass
-                if product.is_a("IfcStair"):
-                    stair = element_select.create(self, product)
+                if element.is_a("IfcStair"):
+                    stair = element_select.create(self, element)
                     self.elements.append(stair)
                     pass
-                if product.is_a("IfcRamp"):
-                    print "RAMP IS EXIST"
+                if element.is_a("IfcRamp"):
+                    print "RAMP IS NOT IMPLEMENTED YET"
                     pass
-                if product.is_a("IfcRoof"):
-                    roof = element_select.create(self, product)
+                if element.is_a("IfcRoof"):
+                    roof = element_select.create(self, element)
                     self.elements.append(roof)
                     pass
-                if product.is_a("IfcFurnishingElement"):
-                    print "ADA FURNITURE BRROOOOO"
-
+                if element.is_a("IfcFurnishingElement"):
+                    furniture = element_select.create(self, element)
+                    self.elements.append(furniture)
                     pass
+                if element.is_a("IfcFlowTerminal"):
+                    flow_terminal = element_select.create(self, element)
+                    self.elements.append(flow_terminal)
+                    pass
+                if element.is_a("IfcBuildingElementProxy"):
+                    building_element_proxy = element_select.create(self, element)
+                    self.elements.append(building_element_proxy)
+                    pass
+        spatial_structure_elements = self.ifc_file.by_type("IfcSpatialStructureElement")
+        for spatial_structure_element in spatial_structure_elements:
+            if spatial_structure_element.is_a("IfcSite"):
+                site = Site(self, spatial_structure_element)
+                print site
+                print site.main_topods_shape
+                self.elements.append(site)
+
     def close_file(self):
         # clear section plane if exist
         self.clear_crv_sections()
         # clear section path if exist
         self.clear_section_path()
         # clear ifc products
-        self.clear_products()
+        self.clear_elements()
 
-    def display_products(self):
+    def display_elements(self):
         display = self.canvas.get_display()
         for element in self.elements:
             element.display_shape(display)
         display.FitAll()
 
     def generate_section_plane(self):
-        section_success = self.create_section_plane(2)
+        section_success = self.create_section_plane(0.5)
         if not section_success:
             print "no curve drawn yet"
 
@@ -253,11 +269,14 @@ class GuiMainWindow(QtGui.QMainWindow):
     def clear_section_path(self):
         self.canvas.clear_path_curve()
 
-    def clear_products(self):
+    def clear_elements(self):
         display = self.canvas.get_display()
         display.Context.RemoveAll()
-        self.products = []
+        self.elements = []
         self.ifc_file = None
+
+    def clear_materials(self):
+        self.material_dict = MaterialDict()
 
     @staticmethod
     def divide_curve(crv, distance):
@@ -291,6 +310,12 @@ class GuiMainWindow(QtGui.QMainWindow):
                         edges.Append(edge)
                     ShapeAnalysis_FreeBounds.ConnectEdgesToWires(edges_handle, 1e-5, True, wires_handle)
                     # wires = wires_handle.GetObject()
+
+    def foo(self):
+        display = self.canvas.get_display()
+        print display
+        display.Context.RemoveAll()
+        pass
 
     def get_material_dict(self):
         return self.material_dict

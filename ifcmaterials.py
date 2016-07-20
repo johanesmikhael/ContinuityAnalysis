@@ -1,27 +1,33 @@
 class Material(object):
-    def __init__(self, ifc_material):
+    def __init__(self, ifc_material = None):
         self.ifc_material = ifc_material
-        self.name = self.ifc_material.Name
         self.surface_style_name = None
         self.surface_colour = None
         self.transparency = None
         self.diffuse_colour = None
         self.reflectance_method = None
-        has_representation = self.ifc_material.HasRepresentation
-        if has_representation:
-            material_definition_representation = has_representation[0]
-            representation = material_definition_representation.Representations[0]
-            representation_item = representation.Items[0]  # get IfcStyledItem
-            style_assignement = representation_item.Styles[0]
-            style_select = style_assignement.Styles[0]
-            if style_select.is_a("IfcSurfaceStyle"):
-                surface_style_element_select = style_select.Styles[0]
-                self.surface_style_name = style_select.Name
-                if surface_style_element_select.is_a("IfcSurfaceStyleShading"):
-                    self.surface_colour = Material.get_rgb_tuple(surface_style_element_select.SurfaceColour)
-                    self.transparency = surface_style_element_select.Transparency
-                    self.diffuse_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.DiffuseColour)
-                    self.reflectance_method = surface_style_element_select.ReflectanceMethod
+        if self.ifc_material:
+            self.name = self.ifc_material.Name
+            has_representation = self.ifc_material.HasRepresentation
+            if has_representation:
+                material_definition_representation = has_representation[0]
+                representation = material_definition_representation.Representations[0]
+                representation_item = representation.Items[0]  # get IfcStyledItem
+                style_assignement = representation_item.Styles[0]
+                style_select = style_assignement.Styles[0]
+                if style_select.is_a("IfcSurfaceStyle"):
+                    surface_style_element_select = style_select.Styles[0]
+                    self.surface_style_name = style_select.Name
+                    if surface_style_element_select.is_a("IfcSurfaceStyleShading"):
+                        self.surface_colour = Material.get_rgb_tuple(surface_style_element_select.SurfaceColour)
+                        self.transparency = surface_style_element_select.Transparency
+                        self.diffuse_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.DiffuseColour)
+                        self.reflectance_method = surface_style_element_select.ReflectanceMethod
+            else:
+                self.surface_colour = (0.125, 0.125, 0.125)
+                self.transparency = 0
+        else:
+            self.name = None
 
     def get_surface_colour(self):
         if self.surface_colour:
@@ -70,9 +76,14 @@ class MaterialDict(object):
         self.material_dict = dict()
         self.material_dict_by_surface_style = dict()
 
-    def add_material(self, *args):
-        ifc_material = args[0]
-        material_name = ifc_material.Name
+    def add_default_material(self):
+        return self.add_material()
+
+    def add_material(self, ifc_material=None):
+        if ifc_material:
+            material_name = ifc_material.Name
+        else:
+            material_name = "default_material"
         if material_name in self.material_dict:  # material already exist
             print "material \"%s\" already exist in material list" % material_name
             material = self.material_dict[material_name]
@@ -83,6 +94,26 @@ class MaterialDict(object):
             print material.get_surface_colour()
             self.material_dict[material_name] = material
             return material
+
+    def add_material_by_style_select(self, style_select):
+        material_name = style_select.Name
+        if material_name in self.material_dict:
+            print "material \"%s\" already exist in material list" % material_name
+            material = self.material_dict[material_name]
+            return material
+        else:
+            print "material \"%s\" is not exist in material list" % material_name
+            material = Material()
+            surface_style_element_select = style_select.Styles[0]
+            surface_color = Material.get_rgb_tuple(surface_style_element_select.SurfaceColour)
+            material.surface_colour = surface_color
+            material.transparency = surface_style_element_select.Transparency
+            material.diffuse_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.DiffuseColour)
+            material.reflectance_method = surface_style_element_select.ReflectanceMethod
+            print material.get_surface_colour()
+            self.material_dict[material_name] = material
+            return material
+        pass
 
     def add_material_by_style(self, material):
         self.material_dict_by_surface_style[material.surface_style_name] = material

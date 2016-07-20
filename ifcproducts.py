@@ -121,6 +121,21 @@ def create_roof(*args):
 element_select.add_function_to_dict("IfcRoof", create_roof)
 
 
+def create_furniture(*args):
+    return Furniture(*args)
+element_select.add_function_to_dict("IfcFurnishingElement", create_furniture)
+
+
+def create_flow_terminal(*args):
+    return FlowTerminal(*args)
+element_select.add_function_to_dict("IfcFlowTerminal", create_flow_terminal)
+
+
+def create_building_element_proxy(*args):
+    return BuildingElementProxy(*args)
+element_select.add_function_to_dict("IfcBuildingElementProxy", create_building_element_proxy)
+
+
 class BuildingElement(object):
     def __init__(self, *args):
         parent, ifc_instance = args
@@ -206,14 +221,26 @@ class BuildingElement(object):
                         mapped_representation = item.MappingSource.MappedRepresentation
                         mapped_representation_items = mapped_representation.Items
                         for mapped_representation_item in mapped_representation_items:
-                            ifc_styled_item = mapped_representation_item.StyledByItem[0]  # get IfcStyledItem
-                            style_assignement = ifc_styled_item.Styles[0]
-                            style_select = style_assignement.Styles[0]
-                            material = self.material_dict.get_material(style_select.Name)
-                            material_list.append(material)
+                            if not mapped_representation_item.is_a("IfcFaceBasedSurfaceModel"):
+                                ifc_styled_item = mapped_representation_item.StyledByItem[0]  # get IfcStyledItem
+                                style_assignment = ifc_styled_item.Styles[0]
+                                style_select = style_assignment.Styles[0]
+                                material = self.material_dict.get_material(style_select.Name)
+                                material_list.append(material)
+                            else:
+                                fbsm_faces = mapped_representation_item.FbsmFaces
+                                if mapped_representation_item.StyledByItem:
+                                    ifc_styled_item = mapped_representation_item.StyledByItem[0]  # get IfcStyledItem
+                                    style_assignment = ifc_styled_item.Styles[0]
+                                    style_select = style_assignment.Styles[0]
+                                    material = self.material_dict.get_material(style_select.Name)
+                                    for fbsm_face in fbsm_faces:
+                                        material_list.append(material)
+                                else:
+                                    for fbsm_face in fbsm_faces:
+                                        material_list.append(None)
                 else:
                     for item in ifc_representation.Items:
-                        print item
                         if not item.is_a("IfcBooleanClippingResult"):
                             ifc_styled_item = item.StyledByItem[0]  # get IfcStyledItem
                         else:
@@ -482,3 +509,83 @@ class Roof(BuildingElement):
     def __init__(self, *args):
         super(Roof, self).__init__(*args)
         self.analyze_representation()
+
+
+class Furniture(BuildingElement):
+    def __init__(self, *args):
+        super(Furniture, self).__init__(*args)
+        self.analyze_representation()
+
+
+class FlowTerminal(BuildingElement):
+    def __init__(self, *args):
+        super(FlowTerminal, self).__init__(*args)
+        self.ifc_flow_terminal_type = self.get_flow_terminal_type()
+        self.analyze_representation()
+
+    def get_flow_terminal_type(self):
+        ifc_rel_defines = self.ifc_instance.IsDefinedBy
+        for ifc_rel_define in ifc_rel_defines:
+            if ifc_rel_define.is_a("IfcRelDefinesByType"):
+                flow_terminal_type = ifc_rel_define.RelatingType
+                return flow_terminal_type.is_a(), flow_terminal_type.Name
+                break
+        return None
+
+
+class BuildingElementProxy(BuildingElement):
+    def __init__(self, *args):
+        super(BuildingElementProxy, self).__init__(*args)
+        self.ifc_building_element_proxy_type = self.get_building_element_proxy_type()
+        self.analyze_representation()
+
+    def get_building_element_proxy_type(self):
+        ifc_rel_defines = self.ifc_instance.IsDefinedBy
+        for ifc_rel_define in ifc_rel_defines:
+            if ifc_rel_define.is_a("IfcRelDefinesByType"):
+                flow_terminal_type = ifc_rel_define.RelatingType
+                if flow_terminal_type:
+                    return flow_terminal_type.is_a, flow_terminal_type.Name
+                break
+        return None
+
+
+class Site(BuildingElement):
+    def __init__(self, *args):
+        super(Site, self).__init__(*args)
+        if self.ifc_instance.Representation:
+            self.main_topods_shape =  ifcopenshell.geom.create_shape(self.ifcopenshell_setting, self.ifc_instance).geometry
+            representation = self.ifc_instance.Representation
+            material_list = []
+            for ifc_representation in representation.Representations:
+                if ifc_representation.RepresentationIdentifier == "Body":
+                    representation_items = ifc_representation.Items
+                    print representation_items
+                    for representation_item in representation_items:
+                        fsbm_faces = representation_item.FbsmFaces
+                        if representation_item.StyledByItem:
+                            ifc_styled_item = representation_item.StyledByItem[0]
+                            style_assignment = ifc_styled_item.Styles[0]
+                            style_select = style_assignment.Styles[0]
+                            material = self.material_dict.get_material(style_select.Name)
+                            if material is None:
+                                material = self.material_dict.add_material_by_style_select(style_select)
+                            for fsbm_face in fsbm_faces:
+                                material_list.append(material)
+                        else:
+                            for fsbm_face in fsbm_faces:
+                                material_list.append(None)
+            shape_iterator = OCC.TopoDS.TopoDS_Iterator(self.main_topods_shape)
+            print len(material_list)
+            j = 0
+            while shape_iterator.More():
+                topods_shape = shape_iterator.Value()
+                shape_dict = dict()
+                if j < len(material_list):
+                    shape_dict["material"] = material_list[j]
+                else:
+                    shape_dict["material"] = None
+                shape_dict["topods_shape"] = topods_shape
+                self.topods_shapes.append(shape_dict)
+                j += 1
+                shape_iterator.Next()

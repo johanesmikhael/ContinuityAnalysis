@@ -13,7 +13,6 @@ class IfcViewerWidget(qtViewer3d):
     def __init__(self, *kargs):
         super(IfcViewerWidget, self).__init__(*kargs)
         self._parent = kargs[0]
-
         self._is_draw_path = False
         self._path_pts = []
         self._path_curve = [None, None]
