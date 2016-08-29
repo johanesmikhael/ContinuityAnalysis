@@ -272,6 +272,7 @@ class BuildingElement(object):
                 self.children.append(element)
 
 
+
     @staticmethod
     def break_faces(current_exp):
         face = OCC.TopoDS.topods.Face(current_exp)
@@ -306,7 +307,17 @@ class BuildingElement(object):
         if ifc_instance.IsDecomposedBy:
             return True
         else:
-            return False
+            return
+
+    @staticmethod
+    def get_shapes(element):
+        shapes = []
+        shapes.extend(element.topods_shapes)
+        if element.is_decomposed:
+            children = element.children
+            for child in children:
+                shapes.extend(BuildingElement.get_shapes(child))
+        return shapes
 
 
 class Slab(BuildingElement):

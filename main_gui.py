@@ -20,9 +20,15 @@ from OCC.TopTools import Handle_TopTools_HSequenceOfShape
 from OCC.BRepAlgoAPI import BRepAlgoAPI_Section
 from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
+from OCC.TopoDS import topods_Wire
+
 from ifcproducts import *
 
 from ifcmaterials import *
+
+from visualization_gui import *
+
+from section_elements import *
 
 
 class GuiMainWindow(QtGui.QMainWindow):
@@ -48,8 +54,13 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.ifcopenshell_setting.set(self.ifcopenshell_setting.USE_PYTHON_OPENCASCADE, True)
         self.ifc_file = None
         self.section_planes = []
+        self.section_list = []
         self.elements = []
         self.material_dict = MaterialDict()
+
+        self.section_visualization_win = None
+
+        self.section_distance = 0.05
 
     # noinspection PyBroadException
     def setup_ifcopenshell_viewer(self, _app):
@@ -122,7 +133,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.add_function_to_toolbar("Main Toolbar", self.draw_path)
         self.add_function_to_toolbar("Main Toolbar", self.generate_section_plane)
         self.add_function_to_toolbar("Main Toolbar", self.process_section)
-        self.add_function_to_toolbar("Main Toolbar", self.foo)
+        self.add_function_to_toolbar("Main Toolbar", self.analyze_section)
 
     def draw_path(self):
         if self.ifc_file is None:
@@ -238,7 +249,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         display.FitAll()
 
     def generate_section_plane(self):
-        section_success = self.create_section_plane(0.5)
+        section_success = self.create_section_plane(self.section_distance)
         if not section_success:
             print "no curve drawn yet"
 
@@ -254,7 +265,7 @@ class GuiMainWindow(QtGui.QMainWindow):
                 pt_sec_plane = gp_Pln(pt, gp_Dir(pt_vec))
                 section_face = BRepBuilderAPI_MakeFace(pt_sec_plane, -5, 5, -5, 5).Face()
                 section_face_display = display.DisplayShape(section_face, transparency=0.99, color=255)
-                self.section_planes.append((i, section_face, section_face_display))
+                self.section_planes.append((i, section_face, section_face_display, pt_sec_plane))
             display.Repaint()
             return True
         else:
@@ -291,30 +302,52 @@ class GuiMainWindow(QtGui.QMainWindow):
         return curve_param
 
     def process_section(self):
-        # self.coba_01()
-        for section_plane in self.section_planes:
-            section_plane_face = section_plane[1]
-            for product in self.products:
-                shape = product[1]
-                section = BRepAlgoAPI_Section(section_plane_face, shape)
-                edge_list = section.SectionEdges()
-                if not edge_list.IsEmpty():
-                    edges = TopTools_HSequenceOfShape()
-                    edges_handle = Handle_TopTools_HSequenceOfShape(edges)
-                    wires = TopTools_HSequenceOfShape()
-                    wires_handle = Handle_TopTools_HSequenceOfShape(wires)
-                    edge_list_iterator = TopTools_ListIteratorOfListOfShape(edge_list)
-                    while edge_list_iterator.More():
-                        edge = edge_list_iterator.Value()
-                        edge_list_iterator.Next()
-                        edges.Append(edge)
-                    ShapeAnalysis_FreeBounds.ConnectEdgesToWires(edges_handle, 1e-5, True, wires_handle)
-                    # wires = wires_handle.GetObject()
+        self.clear_section()
+        if sys.version_info[:3] >= (2, 6, 0):
+            import multiprocessing as processing
+        else:
+            import processing
+        n_procs = processing.cpu_count()
 
-    def foo(self):
+        if len(self.section_planes) == 0:
+            print "No section planes to intersect with"
+            return
+        path_curve = self.canvas.get_path_curve()[0]
+        self.section_list = self.create_section(path_curve, self.section_planes, self.elements)
         display = self.canvas.get_display()
-        print display
-        display.Context.RemoveAll()
+        for section in self.section_list:
+            for element_section in section:
+                element_section.display_wire(display)
+
+    def clear_section(self):
+        display = self.canvas.get_display()
+        if self.section_list:
+            for section in self.section_list:
+                for element_section in section:
+                    element_section.clear_display(display)
+        self.section_list = []
+
+    @staticmethod
+    def create_section(path, section_planes, elements):
+        section_list = []
+        for section_plane in section_planes:
+            section = []
+            for element in elements:
+                element_section = ElementSection.create_element_section(section_plane, element)
+                if element_section:
+                    section.append(element_section)
+            section_list.append(section)
+        return section_list
+
+    def analyze_section(self):
+        if not self.section_visualization_win:
+            self.section_visualization_win = GuiVisualization(self)
+            self.section_visualization_win.canvas.InitDriver()
+            self.section_visualization_win.get_init_section()
+        if self.section_visualization_win.isVisible():
+            self.section_visualization_win.hide()
+        else:
+            self.section_visualization_win.show()
         pass
 
     def get_material_dict(self):
