@@ -280,7 +280,6 @@ class BuildingElement(object):
                 self.children.append(element)
 
 
-
     @staticmethod
     def break_faces(current_exp):
         face = OCC.TopoDS.topods.Face(current_exp)
