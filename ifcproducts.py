@@ -222,10 +222,13 @@ class BuildingElement(object):
                         mapped_representation_items = mapped_representation.Items
                         for mapped_representation_item in mapped_representation_items:
                             if not mapped_representation_item.is_a("IfcFaceBasedSurfaceModel"):
-                                ifc_styled_item = mapped_representation_item.StyledByItem[0]  # get IfcStyledItem
-                                style_assignment = ifc_styled_item.Styles[0]
-                                style_select = style_assignment.Styles[0]
-                                material = self.material_dict.get_material(style_select.Name)
+                                if len(mapped_representation_item.StyledByItem) > 0:
+                                    ifc_styled_item = mapped_representation_item.StyledByItem[0]  # get IfcStyledItem
+                                    style_assignment = ifc_styled_item.Styles[0]
+                                    style_select = style_assignment.Styles[0]
+                                    material = self.material_dict.get_material(style_select.Name)
+                                else:
+                                    material = self.material_dict.get_default_material()
                                 material_list.append(material)
                             else:
                                 fbsm_faces = mapped_representation_item.FbsmFaces
@@ -241,16 +244,21 @@ class BuildingElement(object):
                                         material_list.append(None)
                 else:
                     for item in ifc_representation.Items:
+                        ifc_styled_item = None
                         if not item.is_a("IfcBooleanClippingResult"):
-                            ifc_styled_item = item.StyledByItem[0]  # get IfcStyledItem
+                            if len(item.StyledByItem) > 0:
+                                ifc_styled_item = item.StyledByItem[0]  # get IfcStyledItem
                         else:
                             first_operand_item = item.FirstOperand
                             while first_operand_item.is_a("IfcBooleanClippingResult"):
                                 first_operand_item = first_operand_item.FirstOperand
                             ifc_styled_item = first_operand_item.StyledByItem[0]
-                        style_assignement = ifc_styled_item.Styles[0]
-                        style_select = style_assignement.Styles[0]
-                        material = self.material_dict.get_material(style_select.Name)
+                        if ifc_styled_item:
+                            style_assignement = ifc_styled_item.Styles[0]
+                            style_select = style_assignement.Styles[0]
+                            material = self.material_dict.get_material(style_select.Name)
+                        else:
+                            material = self.material_dict.get_default_material()
                         material_list.append(material)
         shape_iterator = OCC.TopoDS.TopoDS_Iterator(self.main_topods_shape)
         j = 0

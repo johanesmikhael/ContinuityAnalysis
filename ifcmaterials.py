@@ -122,6 +122,9 @@ class MaterialDict(object):
         material_name = args[0]
         return self.material_dict.get(material_name)
 
+    def get_default_material(self):
+        return self.material_dict.get("default_material")
+
     def get_material_by_surface_style(self, *args):
         surface_style_name = args[0]
         return self.material_dict_by_surface_style.get(surface_style_name)
@@ -134,7 +137,8 @@ class MaterialDict(object):
                 material_association = association
                 break
         if material_association is None:
-            return
+            material = self.add_material()
+            return "IfcMaterial", material
         relating_material = material_association.RelatingMaterial
         if relating_material.is_a("IfcMaterialLayerSetUsage"):
             material_layers = self.get_material_layers_from_set_usage(relating_material)
@@ -152,7 +156,8 @@ class MaterialDict(object):
             return "IfcMaterial", material
             pass
         else:
-            return None
+            material = self.add_material()
+            return "IfcMaterial", material
 
     def get_material_list(self, relating_material):
         material_list = []
