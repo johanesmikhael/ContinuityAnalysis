@@ -10,6 +10,31 @@ import OCC.Quantity
 
 from OCC.TopoDS import topods_Wire
 
+from OCC.TopoDS import topods
+
+
+class Section(object):
+    def __init__(self):
+        self._element_section_list = []
+
+    def add_element_section(self, element_section):
+        self._element_section_list.append(element_section)
+
+    def get_element_section_list(self):
+        return self._element_section_list
+
+    def clear_display(self, display):
+        for element_section in self._element_section_list:
+            element_section.clear_display(display)
+
+    def display_wire(self, display):
+        for element_section in self._element_section_list:
+            element_section.display_wire(display)
+
+    def copy_section(self, section):
+        for element_section in section.get_element_section_list():
+            element_section_copy = element_section.create_copy()
+            self._element_section_list.append(element_section_copy)
 
 class ElementSection(object):
     def __init__(self, *args):
@@ -63,21 +88,18 @@ class ElementSection(object):
                 edge_list_iterator.Next()
                 edges.Append(edge)
             ShapeAnalysis_FreeBounds.ConnectEdgesToWires(edges_handle, 1e-5, True, wires_handle)
-            wires = wires_handle.GetObject()
+            wires = wires_handle.GetObject()  #get TopTools_HSequenceOfShape from its handle
             for i in range(wires.Length()):
-                wire_shape = wires.Value(i + 1)
-                topods_wire = topods_Wire(wire_shape)
-                topods_wires.append(topods_wire)
+                wire_shape = wires.Value(i + 1)  # get TopoDS_Shape
+                topods_wires.append(wire_shape)
             return topods_wires
         else:
             return None
 
     def display_wire(self, display):
-        print "DISPLAY WIRE"
         if not self.is_decomposed:
             ais_list = []
             for shape_section in self.shapes_section:
-                print shape_section
                 material = shape_section[1]
                 ais_color = OCC.Quantity.Quantity_Color(0.1, 0.1, 0.1, OCC.Quantity.Quantity_TOC_RGB)
                 print material

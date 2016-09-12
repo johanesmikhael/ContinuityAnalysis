@@ -1,9 +1,10 @@
 from OCC.Display.backend import load_backend
 from OCC.gp import gp_Pnt
-from OCC.TColgp import TColgp_Array1OfPnt
-from OCC.Geom import Geom_BezierCurve
 
 from PyQt4 import QtCore
+
+from geom import points_to_bezier_curve
+from geom import points_to_bspline_curve
 
 load_backend("qt-pyqt4")
 from OCC.Display.qtDisplay import qtViewer3d
@@ -46,7 +47,8 @@ class IfcViewerWidget(qtViewer3d):
             temp_pts = self._path_pts[:]
             temp_pts.append((pt, None))
             if len(temp_pts) > 1:
-                self._preview_curve[0] = self.points_to_bezier_curve(temp_pts)
+                # self._preview_curve[0] = points_to_bezier_curve(temp_pts)
+                self._preview_curve[0] = points_to_bspline_curve(temp_pts, 3)
                 if self._preview_curve[1] is not None:
                     self._display.Context.Clear(self._preview_curve[1])
                 self._preview_curve[1] = self._display.DisplayShape(self._preview_curve[0])
@@ -59,12 +61,14 @@ class IfcViewerWidget(qtViewer3d):
             # self._display.SetModeShaded()
             if len(self._path_pts) > 1:
                 self.clear_path_curve()
-                self._path_curve[0] = self.points_to_bezier_curve(self._path_pts)
+                #self._path_curve[0] = points_to_bezier_curve(self._path_pts)
+                self._path_curve[0] = points_to_bspline_curve(self._path_pts, 3)
                 self._path_curve[1] = self._display.DisplayShape(self._path_curve[0])
             for pt in self._path_pts:
                 self._display.Context.Clear(pt[1])
             self._path_pts = []
             self._display.Context.Clear(self._preview_curve[1])
+            self._display.FitAll()
             self._display.Repaint()
 
     def set_draw_path_mode(self, is_draw):
@@ -126,14 +130,6 @@ class IfcViewerWidget(qtViewer3d):
         else:
             self._drawbox = False
             self._display.MoveTo(pt.x, pt.y)
-
-    @staticmethod
-    def points_to_bezier_curve(points):
-        pts = TColgp_Array1OfPnt(0, len(points) - 1)
-        for n, ptn in enumerate(points):
-            pts.SetValue(n, ptn[0])
-        crv = Geom_BezierCurve(pts)
-        return crv
 
     def get_path_curve(self):
         return self._path_curve

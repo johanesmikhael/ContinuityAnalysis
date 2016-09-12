@@ -34,11 +34,6 @@ class Ui_section_visualization(object):
         self.verticalLayout_4.addLayout(self.verticalLayout_toolbar)
         self.horizontalLayout_main = QtGui.QHBoxLayout()
         self.horizontalLayout_main.setObjectName(_fromUtf8("horizontalLayout_main"))
-        self.groupBox = QtGui.QGroupBox(section_visualization)
-        self.groupBox.setMinimumSize(QtCore.QSize(200, 0))
-        self.groupBox.setMaximumSize(QtCore.QSize(200, 16777215))
-        self.groupBox.setObjectName(_fromUtf8("groupBox"))
-        self.horizontalLayout_main.addWidget(self.groupBox)
         self.verticalLayout = QtGui.QVBoxLayout()
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
         self.horizontalLayout_main.addLayout(self.verticalLayout)
@@ -49,5 +44,4 @@ class Ui_section_visualization(object):
 
     def retranslateUi(self, section_visualization):
         section_visualization.setWindowTitle(_translate("section_visualization", "Form", None))
-        self.groupBox.setTitle(_translate("section_visualization", "GroupBox", None))
 

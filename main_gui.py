@@ -316,26 +316,25 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.section_list = self.create_section(path_curve, self.section_planes, self.elements)
         display = self.canvas.get_display()
         for section in self.section_list:
-            for element_section in section:
-                element_section.display_wire(display)
+            section.display_wire(display)
+        display.Repaint()
 
     def clear_section(self):
         display = self.canvas.get_display()
         if self.section_list:
             for section in self.section_list:
-                for element_section in section:
-                    element_section.clear_display(display)
+                section.clear_display(display)
         self.section_list = []
 
     @staticmethod
     def create_section(path, section_planes, elements):
         section_list = []
         for section_plane in section_planes:
-            section = []
+            section = Section()
             for element in elements:
                 element_section = ElementSection.create_element_section(section_plane, element)
                 if element_section:
-                    section.append(element_section)
+                    section.add_element_section(element_section)
             section_list.append(section)
         return section_list
 
