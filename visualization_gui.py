@@ -1,4 +1,5 @@
 from section_analyzer import *
+from quantity import Color
 
 class GuiVisualization(QtGui.QWidget):
     def __init__(self, *args):
@@ -7,13 +8,15 @@ class GuiVisualization(QtGui.QWidget):
         self.ui = Ui_section_visualization()
         self.ui.setupUi(self)
         self.setWindowTitle("Section Visualization")
-        self.canvas = SectionVisualizationWidget()
+        self.canvas = SectionVisualizationWidget(self)
         self.ui.verticalLayout.addWidget(self.canvas)
         self._toolbars = {}
         self._toolbar_methods = {}
         self.setup_toolbar()
         self.section_analyzer = SectionAnalyzer()
         self.section_axis = None
+        self.viewer_bg_color = Color.white
+        self.show_section = True
 
     def add_toolbar(self, toolbar_name):
         _toolbar = QtGui.QToolBar(toolbar_name)
@@ -35,6 +38,7 @@ class GuiVisualization(QtGui.QWidget):
         self.add_toolbar("Main Toolbar")
         self.add_function_to_toolbar("Main Toolbar", self.export_svg)
         self.add_function_to_toolbar("Main Toolbar", self.analyze)
+        self.add_function_to_toolbar("Main Toolbar", self.toggle_section_view)
         pass
 
     def export_svg(self):
@@ -47,46 +51,11 @@ class GuiVisualization(QtGui.QWidget):
         self.canvas.get_display().FitAll()
 
     def analyze(self):
-        self.analyze_dimension()
+        self.section_analyzer.analyze_dimension()
         pass
 
-    def analyze_dimension(self):
-        for i, section in enumerate(self.section_list):
-            x = i * self.parent.section_distance
-            origin_point = gp_Pnt(x, 0.0, 1.0)
-            bottom_point = gp_Pnt(x, 0.0, -4.0)
-            section_edge = BRepBuilderAPI_MakeEdge(origin_point, bottom_point).Edge()
-            self.canvas.get_display().Repaint()
-            nearest_int_point = self.get_nearest_intersection(origin_point, section_edge, section)
-            measurement_edge = BRepBuilderAPI_MakeEdge(origin_point, nearest_int_point).Edge()
-            ais = self.canvas.get_display().DisplayShape(measurement_edge)
+    def toggle_section_view(self):
+        self.show_section = not self.show_section
+        self.section_analyzer.show_section_wire(self.show_section)
 
-    @staticmethod
-    def get_nearest_intersection(origin_point, edge, section):
-        nearest_param = None
-        edge_curve = BRepAdaptor_Curve(edge)
-        for element_section in section.get_element_section_list():
-            for shape_section in element_section.shapes_section:
-                for shape in shape_section[0]:
-                    exp = TopExp_Explorer(shape, TopAbs_EDGE)
-                    while exp.More():
-                        shape_edge = topods.Edge(exp.Current())
-                        intersection = IntTools_EdgeEdge(edge, shape_edge)
-                        intersection.Perform()
-                        if intersection.IsDone():
-                            commonparts = intersection.CommonParts()
-                            for i in range(commonparts.Length()):
-                                commonpart = commonparts.Value(i + 1)
-                                print commonpart
-                                parameter = commonpart.VertexParameter1()
-                                if not nearest_param:
-                                    nearest_param = parameter
-                                else:
-                                    if parameter < nearest_param:
-                                        nearest_param = parameter
-                        exp.Next()
-        if nearest_param:
-            point = edge_curve.Value(nearest_param)
-            return point
-        else:
-            return None
+

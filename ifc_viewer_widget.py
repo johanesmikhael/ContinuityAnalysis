@@ -18,11 +18,13 @@ class IfcViewerWidget(qtViewer3d):
         self._path_pts = []
         self._path_curve = [None, None]
         self._preview_curve = [None, None]
-        self.path_height = 1
+        self._path_height = None
 
     def InitDriver(self):
         super(IfcViewerWidget, self).InitDriver()
-        self.get_display().set_bg_gradient_color(38, 38, 38, 38, 38, 38)
+        r, g, b = self._parent.viewer_bg_color
+        self.get_display().set_bg_gradient_color(r, g, b, r, g, b)
+        self._path_height = self._parent.path_elevation
 
     def _SetupKeyMap(self):
         super(IfcViewerWidget, self)._SetupKeyMap()
@@ -61,13 +63,13 @@ class IfcViewerWidget(qtViewer3d):
             # self._display.SetModeShaded()
             if len(self._path_pts) > 1:
                 self.clear_path_curve()
-                #self._path_curve[0] = points_to_bezier_curve(self._path_pts)
+                # self._path_curve[0] = points_to_bezier_curve(self._path_pts)
                 self._path_curve[0] = points_to_bspline_curve(self._path_pts, 3)
                 self._path_curve[1] = self._display.DisplayShape(self._path_curve[0])
             for pt in self._path_pts:
-                self._display.Context.Clear(pt[1])
+                self._display.Context.Remove(pt[1])
             self._path_pts = []
-            self._display.Context.Clear(self._preview_curve[1])
+            self._display.Context.Remove(self._preview_curve[1])
             self._display.FitAll()
             self._display.Repaint()
 
@@ -82,7 +84,7 @@ class IfcViewerWidget(qtViewer3d):
 
     def mouseReleaseEvent(self, event):
         if self._is_draw_path and event.button() == QtCore.Qt.LeftButton:
-            self.draw_path(event, self.path_height)
+            self.draw_path(event, self._path_height)
         else:
             super(IfcViewerWidget, self).mouseReleaseEvent(event)
 
@@ -92,7 +94,7 @@ class IfcViewerWidget(qtViewer3d):
         modifiers = event.modifiers()
         # DRAW SPLINE
         if self._is_draw_path:
-            self.preview_path(event, self.path_height)
+            self.preview_path(event, self._path_height)
         pass
         # ROTATE
         if (buttons == QtCore.Qt.LeftButton and
@@ -137,7 +139,7 @@ class IfcViewerWidget(qtViewer3d):
     def clear_path_curve(self):
         if self._path_curve[0] is not None:
             if self._path_curve[1] is not None:
-                self._display.Context.Clear(self._path_curve[1])
+                self._display.Context.Remove(self._path_curve[1])
             self._path_curve[0] = None
             return True
         else:

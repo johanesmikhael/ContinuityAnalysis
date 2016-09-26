@@ -5,6 +5,10 @@ from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 from OCC.TopTools import TopTools_ListIteratorOfListOfShape
 from OCC.TopTools import TopTools_HSequenceOfShape
 from OCC.TopTools import Handle_TopTools_HSequenceOfShape
+from OCC.BRepAdaptor import BRepAdaptor_Curve
+from OCC.TopExp import TopExp_Explorer
+from OCC.TopAbs import *
+from OCC.IntTools import IntTools_EdgeEdge
 
 import OCC.Quantity
 
@@ -16,6 +20,10 @@ from OCC.TopoDS import topods
 class Section(object):
     def __init__(self):
         self._element_section_list = []
+        self.bottom_pt = None
+        self.upper_pt = None
+        self.left_pt = None
+        self.right_pt = None
 
     def add_element_section(self, element_section):
         self._element_section_list.append(element_section)
@@ -35,6 +43,35 @@ class Section(object):
         for element_section in section.get_element_section_list():
             element_section_copy = element_section.create_copy()
             self._element_section_list.append(element_section_copy)
+
+    def set_visible(self, display, is_visibile):
+        for element_section in self._element_section_list:
+            if is_visibile:
+                element_section.show_wire(display)
+            else:
+                element_section.hide_wire(display)
+
+    def get_nearest_intersection_to_edges(self, edges):
+        points = []
+        for edge in edges:
+            points.append(self.get_nearest_intersection(edge))
+        return points
+
+    def get_nearest_intersection(self, edge):
+        nearest_param = None
+        edge_curve = BRepAdaptor_Curve(edge)
+        for element_section in self.get_element_section_list():
+            param = element_section.nearest_intersection(edge)
+            if param:
+                if not nearest_param or nearest_param > param:
+                    nearest_param = param
+        if nearest_param:
+            point = edge_curve.Value(nearest_param)
+        else:
+            last_param = edge_curve.LastParameter()
+            point = edge_curve.Value(last_param)
+        return point
+
 
 class ElementSection(object):
     def __init__(self, *args):
@@ -109,18 +146,33 @@ class ElementSection(object):
                     ais_color = OCC.Quantity.Quantity_Color(color[0], color[1], color[2], OCC.Quantity.Quantity_TOC_RGB)
                     transparency = material.get_transparency()
                 for shape in shape_section[0]:
-                    ais = display.DisplayShape(shape, transparency=transparency).GetObject()
-                    ais.SetColor(ais_color)
+                    ais = display.DisplayShape(shape, transparency=transparency)
+                    ais.GetObject().SetColor(ais_color)
                     ais_list.append(ais)
             self.ais = ais_list
         else:
             for child in self.children:
                 child.display_wire(display)
 
+    def hide_wire(self, display):
+        if not self.is_decomposed:
+            for ais in self.ais:
+                display.Context.Erase(ais)
+        else:
+            for child in self.children:
+                child.hide_wire(display)
+
+    def show_wire(self, display):
+        if not self.is_decomposed:
+            for ais in self.ais:
+                display.Context.Display(ais)
+        else:
+            for child in self.children:
+                child.show_wire(display)
+
     def clear_display(self, display):
         if not self.is_decomposed:
             for ais in self.ais:
-                print ais
                 display.Context.Remove(ais)
         else:
             for child in self.children:
@@ -145,6 +197,32 @@ class ElementSection(object):
                 child_copy = child.create_copy()
                 element_section.children.append(child_copy)
         return element_section
+
+    def nearest_intersection(self, edge):
+        nearest_param = None
+        if not self.is_decomposed:
+            for shape_section in self.shapes_section:
+                for shape in shape_section[0]:
+                    exp = TopExp_Explorer(shape, TopAbs_EDGE)
+                    while exp.More():
+                        shape_edge = topods.Edge(exp.Current())
+                        intersection = IntTools_EdgeEdge(edge, shape_edge)
+                        intersection.Perform()
+                        if intersection.IsDone():
+                            commonparts = intersection.CommonParts()
+                            for i in range(commonparts.Length()):
+                                commonpart = commonparts.Value(i+1)
+                                parameter = commonpart.VertexParameter1()
+                                if not nearest_param or nearest_param > parameter:
+                                    nearest_param = parameter
+                        exp.Next()
+        else:
+            for child in self.children:
+                param = child.nearest_intersection(edge)
+                if param:
+                    if not nearest_param or nearest_param > param:
+                        nearest_param = param
+        return nearest_param
 
 
 

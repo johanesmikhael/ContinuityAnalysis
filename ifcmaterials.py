@@ -37,7 +37,8 @@ class Material(object):
 
     def get_shading_colour(self):  # reduced colour scale to prevent overbright
         r, g, b = self.get_surface_colour()
-        return 0.4 * r, 0.4 * g, 0.4 * b
+        constant = 0.3
+        return constant * r, constant * g, constant * b
 
     def get_transparency(self):
         if self.transparency:

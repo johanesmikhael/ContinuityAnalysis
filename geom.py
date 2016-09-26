@@ -3,6 +3,7 @@ from OCC.TColStd import TColStd_Array1OfReal
 from OCC.TColStd import TColStd_Array1OfInteger
 from OCC.Geom import Geom_BezierCurve
 from OCC.Geom import Geom_BSplineCurve
+from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 import collections
 
@@ -60,3 +61,11 @@ def points_to_bspline_curve(points, degree):
         i += 1.0
     crv = Geom_BSplineCurve(pts, knots, mult, degree, False)
     return crv
+
+
+def create_edge_to_points(origin_point, points):
+    edges = []
+    for point in points:
+        edge = BRepBuilderAPI_MakeEdge(origin_point, point).Edge()
+        edges.append(edge)
+    return edges

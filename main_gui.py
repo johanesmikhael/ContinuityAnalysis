@@ -30,6 +30,8 @@ from visualization_gui import *
 
 from section_elements import *
 
+from quantity import Color
+
 
 class GuiMainWindow(QtGui.QMainWindow):
     def __init__(self, *args):
@@ -61,6 +63,10 @@ class GuiMainWindow(QtGui.QMainWindow):
         self.section_visualization_win = None
 
         self.section_distance = 0.05
+        self.path_elevation = 1.2
+        self.section_plane_size = 5.0
+
+        self.viewer_bg_color = Color.white
 
     # noinspection PyBroadException
     def setup_ifcopenshell_viewer(self, _app):
@@ -263,7 +269,8 @@ class GuiMainWindow(QtGui.QMainWindow):
                 pt = crv.Value(i)
                 pt_vec = crv.DN(i, 1)
                 pt_sec_plane = gp_Pln(pt, gp_Dir(pt_vec))
-                section_face = BRepBuilderAPI_MakeFace(pt_sec_plane, -5, 5, -5, 5).Face()
+                size = self.section_plane_size
+                section_face = BRepBuilderAPI_MakeFace(pt_sec_plane, -size, size, -size, size).Face()
                 section_face_display = display.DisplayShape(section_face, transparency=0.99, color=255)
                 self.section_planes.append((i, section_face, section_face_display, pt_sec_plane))
             display.Repaint()
