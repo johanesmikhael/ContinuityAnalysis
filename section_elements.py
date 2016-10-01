@@ -61,16 +61,30 @@ class Section(object):
         nearest_param = None
         edge_curve = BRepAdaptor_Curve(edge)
         for element_section in self.get_element_section_list():
-            param = element_section.nearest_intersection(edge)
+            param = element_section.nearest_intersection_element(edge)
             if param:
-                if not nearest_param or nearest_param > param:
-                    nearest_param = param
+                if not nearest_param or nearest_param > param[0]:
+                    nearest_param = param[0]
         if nearest_param:
             point = edge_curve.Value(nearest_param)
         else:
             last_param = edge_curve.LastParameter()
             point = edge_curve.Value(last_param)
         return point
+
+    def get_nearest_intersection_element(self, edge):
+        nearest_param = None
+        edge_curve = BRepAdaptor_Curve(edge)
+        for element_section in self._element_section_list:
+            param = element_section.nearest_intersection_element(edge)
+            if param:
+                if not nearest_param or nearest_param[0] > param[0]:
+                    nearest_param = param
+        if nearest_param:
+            point = edge_curve.Value(nearest_param[0])
+            return point, nearest_param[1], nearest_param[2]
+        else:
+            return None
 
 
 class ElementSection(object):
@@ -139,7 +153,6 @@ class ElementSection(object):
             for shape_section in self.shapes_section:
                 material = shape_section[1]
                 ais_color = OCC.Quantity.Quantity_Color(0.1, 0.1, 0.1, OCC.Quantity.Quantity_TOC_RGB)
-                print material
                 transparency = 0
                 if material is not None:
                     color = material.get_shading_colour()
@@ -198,7 +211,7 @@ class ElementSection(object):
                 element_section.children.append(child_copy)
         return element_section
 
-    def nearest_intersection(self, edge):
+    def nearest_intersection_element(self, edge):
         nearest_param = None
         if not self.is_decomposed:
             for shape_section in self.shapes_section:
@@ -213,16 +226,15 @@ class ElementSection(object):
                             for i in range(commonparts.Length()):
                                 commonpart = commonparts.Value(i+1)
                                 parameter = commonpart.VertexParameter1()
-                                if not nearest_param or nearest_param > parameter:
-                                    nearest_param = parameter
+                                if not nearest_param or nearest_param[0] > parameter:
+                                    nearest_param = parameter, self, shape_section
                         exp.Next()
         else:
             for child in self.children:
-                param = child.nearest_intersection(edge)
+                param = child.nearest_intersection_element(edge)
                 if param:
-                    if not nearest_param or nearest_param > param:
+                    if not nearest_param or nearest_param[0] > param[0]:
                         nearest_param = param
         return nearest_param
-
 
 

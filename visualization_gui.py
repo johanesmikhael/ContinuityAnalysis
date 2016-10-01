@@ -37,7 +37,8 @@ class GuiVisualization(QtGui.QWidget):
     def setup_toolbar(self):
         self.add_toolbar("Main Toolbar")
         self.add_function_to_toolbar("Main Toolbar", self.export_svg)
-        self.add_function_to_toolbar("Main Toolbar", self.analyze)
+        self.add_function_to_toolbar("Main Toolbar", self.analyze_dimension)
+        self.add_function_to_toolbar("Main Toolbar", self.analyze_surface)
         self.add_function_to_toolbar("Main Toolbar", self.toggle_section_view)
         pass
 
@@ -50,9 +51,12 @@ class GuiVisualization(QtGui.QWidget):
         self.section_analyzer.init(self)
         self.canvas.get_display().FitAll()
 
-    def analyze(self):
+    def analyze_dimension(self):
         self.section_analyzer.analyze_dimension()
         pass
+
+    def analyze_surface(self):
+        self.section_analyzer.analyze_surface()
 
     def toggle_section_view(self):
         self.show_section = not self.show_section
