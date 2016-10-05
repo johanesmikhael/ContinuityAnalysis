@@ -22,11 +22,7 @@
     </layout>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_main">
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout"/>
-     </item>
-    </layout>
+    <layout class="QHBoxLayout" name="horizontalLayout_main"/>
    </item>
   </layout>
  </widget>

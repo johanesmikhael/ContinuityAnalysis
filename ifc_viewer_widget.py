@@ -1,12 +1,12 @@
 from OCC.Display.backend import load_backend
 from OCC.gp import gp_Pnt
 
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
 from geom import points_to_bezier_curve
 from geom import points_to_bspline_curve
 
-load_backend("qt-pyqt4")
+load_backend("qt-pyqt5")
 from OCC.Display.qtDisplay import qtViewer3d
 
 

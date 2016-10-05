@@ -1,7 +1,7 @@
 import sys
 
 from continuity_analyzer_ui import Ui_main_gui
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore, QtWidgets
 
 from ifc_viewer_widget import IfcViewerWidget
 
@@ -22,6 +22,8 @@ from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
 from OCC.TopoDS import topods_Wire
 
+from multiprocess import *
+
 from ifcproducts import *
 
 from ifcmaterials import *
@@ -32,10 +34,12 @@ from section_elements import *
 
 from quantity import Color
 
+from multiprocess import run_multiprocess_cut
 
-class GuiMainWindow(QtGui.QMainWindow):
+
+class GuiMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args):
-        QtGui.QMainWindow.__init__(self, *args)
+        QtWidgets.QMainWindow.__init__(self, *args)
         self.ui = Ui_main_gui()
         self.ui.setupUi(self)
         self.setWindowTitle("Main GUI")
@@ -45,7 +49,7 @@ class GuiMainWindow(QtGui.QMainWindow):
         if not sys.platform == "darwin":
             self.menu_bar = self.menuBar()
         else:
-            self.menu_bar = QtGui.QMenuBar()
+            self.menu_bar = QtWidgets.QMenuBar()
         self._menus = {}
         self._menu_methods = {}
         self._toolbars = {}
@@ -112,9 +116,9 @@ class GuiMainWindow(QtGui.QMainWindow):
     def add_function_to_menu(self, menu_name, _callable):
         assert callable(_callable), "the function supplied is not callable"
         try:
-            _action = QtGui.QAction(_callable.__name__.replace('_', ' ').lower(), self)
-            _action.setMenuRole(QtGui.QAction.NoRole)
-            self.connect(_action, QtCore.SIGNAL('triggered()'), _callable)
+            _action = QtWidgets.QAction(_callable.__name__.replace('_', ' ').lower(), self)
+            _action.setMenuRole(QtWidgets.QAction.NoRole)
+            self.connect(_action, QtCore.pyqtSignal('triggered()'), _callable)
             self._menus[menu_name].addAction(_action)
         except KeyError:
             raise ValueError("the menu item %s does not exist" % menu_name)
@@ -126,8 +130,9 @@ class GuiMainWindow(QtGui.QMainWindow):
     def add_function_to_toolbar(self, toolbar_name, _callable):
         assert callable(_callable), "the function supplied is not callable"
         try:
-            _action = QtGui.QAction(_callable.__name__.replace('_', ' ').lower(), self)
-            self.connect(_action, QtCore.SIGNAL('triggered()'), _callable)
+            _action = QtWidgets.QAction(_callable.__name__.replace('_', ' ').lower(), self)
+            # self.connect(_action, QtCore.pyqtSignal('triggered()'), _callable)
+            _action.triggered.connect(_callable)
             self._toolbars[toolbar_name].addSeparator()
             self._toolbars[toolbar_name].addAction(_action)
         except KeyError:

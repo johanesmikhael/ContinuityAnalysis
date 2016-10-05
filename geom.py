@@ -93,10 +93,6 @@ def create_rectangle_from_center(origin_point, du, dv, orientation):
     x = origin_point.X()
     y = origin_point.Y()
     z = origin_point.Z()
-    p1 = None
-    p2 = None
-    p3 = None
-    p4 = None
     if orientation == Orientation.bottom:
         p1 = gp_Pnt(x-du/2, y-dv/2,z)
         p2 = gp_Pnt(x-du/2, y+dv/2,z)
@@ -108,15 +104,15 @@ def create_rectangle_from_center(origin_point, du, dv, orientation):
         p3 = gp_Pnt(x+du/2, y-dv/2,z)
         p4 = gp_Pnt(x+du/2, y+dv/2,z)
     elif orientation == Orientation.right:
-        p1 = gp_Pnt(x-du/2, y, z+dv/2)
-        p2 = gp_Pnt(x-du/2, y, z-dv/2)
-        p3 = gp_Pnt(x+du/2, y, z-dv/2)
-        p3 = gp_Pnt(x+du/2, y, z+dv/2)
-    elif orientation == orientation.left:
-        p1 = gp_Pnt(x-du/2, y, z-dv/2)
-        p2 = gp_Pnt(x-du/2, y, z+dv/2)
-        p3 = gp_Pnt(x+du/2, y, z+dv/2)
-        p3 = gp_Pnt(x+du/2, y, z-dv/2)
+        p1 = gp_Pnt(x, y-du/2, z+dv/2)
+        p2 = gp_Pnt(x, y-du/2, z-dv/2)
+        p3 = gp_Pnt(x, y+du/2, z-dv/2)
+        p4 = gp_Pnt(x, y+du/2, z+dv/2)
+    elif orientation == Orientation.left:
+        p1 = gp_Pnt(x, y-du/2, z-dv/2)
+        p2 = gp_Pnt(x, y-du/2, z+dv/2)
+        p3 = gp_Pnt(x, y+du/2, z+dv/2)
+        p4 = gp_Pnt(x, y+du/2, z-dv/2)
     wire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, True).Wire()
-    # rectangle_face = BRepBuilderAPI_MakeFace(wire).Face()
-    return wire
+    rectangle_face = BRepBuilderAPI_MakeFace(wire).Face()
+    return rectangle_face

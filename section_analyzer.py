@@ -1,5 +1,4 @@
-from visualization import Ui_section_visualization
-from PyQt4 import QtGui, QtCore
+from PyQt5 import QtGui, QtCore
 from section_visualization_widget import *
 
 from OCC.gp import gp_Pnt, gp_Trsf, gp_Dir, gp_Ax1
@@ -132,7 +131,7 @@ class SectionAnalyzer(object):
     def analyze_surface(self):
         if self.dimension_analysis:
             self.surface_analysis = SurfaceAnalysis(self)
-            self.surface_analysis.perform(0.01)
+            self.surface_analysis.perform(0.05)
             self.display_surface_analysis(True)
 
     def display_surface_analysis(self, is_show_analysis):

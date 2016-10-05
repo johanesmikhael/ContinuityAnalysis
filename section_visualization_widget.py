@@ -1,7 +1,7 @@
 from OCC.Display.backend import load_backend
-from PyQt4 import QtCore
+from PyQt5 import QtCore
 
-load_backend("qt-pyqt4")
+# load_backend("qt-pyqt4")
 from OCC.Display.qtDisplay import qtViewer3d
 
 

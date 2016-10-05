@@ -1,15 +1,19 @@
 from section_analyzer import *
 from quantity import Color
+from visualization_ui import Ui_section_visualization
+from PyQt5 import QtGui, QtCore, QtWidgets
 
-class GuiVisualization(QtGui.QWidget):
+
+class GuiVisualization(QtWidgets.QWidget):
     def __init__(self, *args):
         self.parent = args[0]
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
         self.ui = Ui_section_visualization()
         self.ui.setupUi(self)
         self.setWindowTitle("Section Visualization")
+        self.resize(1024, 600)
         self.canvas = SectionVisualizationWidget(self)
-        self.ui.verticalLayout.addWidget(self.canvas)
+        self.ui.horizontalLayout_main.addWidget(self.canvas)
         self._toolbars = {}
         self._toolbar_methods = {}
         self.setup_toolbar()
@@ -19,7 +23,7 @@ class GuiVisualization(QtGui.QWidget):
         self.show_section = True
 
     def add_toolbar(self, toolbar_name):
-        _toolbar = QtGui.QToolBar(toolbar_name)
+        _toolbar = QtWidgets.QToolBar(toolbar_name)
         self.ui.verticalLayout_toolbar.addWidget(_toolbar)
         self._toolbars[toolbar_name] = _toolbar
         pass
@@ -27,8 +31,9 @@ class GuiVisualization(QtGui.QWidget):
     def add_function_to_toolbar(self, toolbar_name, _callable):
         assert callable(_callable), "the function supplied is not callable"
         try:
-            _action = QtGui.QAction(_callable.__name__.replace('_', ' ').lower(), self)
-            self.connect(_action, QtCore.SIGNAL('triggered()'), _callable)
+            _action = QtWidgets.QAction(_callable.__name__.replace('_', ' ').lower(), self)
+            # self.connect(_action, QtCore.pyqtSignal('triggered()'), _callable)
+            _action.triggered.connect(_callable)
             self._toolbars[toolbar_name].addSeparator()
             self._toolbars[toolbar_name].addAction(_action)
         except KeyError:

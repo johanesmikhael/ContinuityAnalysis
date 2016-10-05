@@ -20,7 +20,7 @@ class DimensionAnalysis(object):
         self.vertical_dimension_num_list = []
         self.horizontal_dimension_edge_ais_list = []
         self.vertical_dimension_edge_ais_list = []
-        self.bounding_rect = [self.path_elevation, 0.0, 0.0, 0.0]  # [minz, maxz, minx, maxx]
+        self.bounding_rect = [self.path_elevation, self.path_elevation, 0.0, 0.0]  # [minz, maxz, minx, maxx]
 
     def perform(self):
         for i, section in enumerate(self.section_list):
@@ -104,6 +104,7 @@ class SurfaceAnalysis(object):
         self.section_distance = parent.section_distance
         self.path_elevation = parent.path_elevation
         self.domain_length = parent.domain_length
+        self.section_num = len(self.section_list)
         self.bottom_surface = None
         self.right_surface = None
         self.upper_surface = None
@@ -113,12 +114,15 @@ class SurfaceAnalysis(object):
     def perform(self, sampling_distance):
         self.sampling_distance = sampling_distance
         self.bottom_surface_analysis()
+        self.right_surface_analysis()
+        self.left_surface_analysis()
+        self.upper_surface_analysis()
 
     def bottom_surface_analysis(self):
         self.bottom_surface = []
         domain_start = Math.integer_division(self.bounding_rect[2], self.sampling_distance)  # left
         domain_end = Math.integer_division(self.bounding_rect[3], self.sampling_distance)  # right
-        for i in range(len(self.section_list)):
+        for i in range(self.section_num):
             y = i * self.section_distance
             section = self.section_list[i]
             self.bottom_surface.append([])
@@ -134,17 +138,55 @@ class SurfaceAnalysis(object):
         self.right_surface = []
         domain_start = Math.integer_division(self.bounding_rect[0], self.sampling_distance)
         domain_end = Math.integer_division(self.bounding_rect[1], self.sampling_distance)
-        for i in range(len(self.section_list)):
-            x = i * self.section_distance
+        for i in range(self.section_num):
+            y = i * self.section_distance
             section = self.section_list[i]
             self.right_surface.append([])
             for j in range(int(domain_start), int(domain_end + 1)):
                 z = j * self.sampling_distance
-                origin_pt = gp_Pnt(x, 0, z)
-                next_pt = gp_Pnt(x, 0 + self.domain_length)
+                origin_pt = gp_Pnt(0, y, z)
+                next_pt = gp_Pnt(self.domain_length, y, z)
+                edge = create_edge_from_two_point(origin_pt, next_pt)
+                point = PointObject.create(self, edge, section, Orientation.right)
+                self.right_surface[i].append(point)
+
+    def upper_surface_analysis(self):
+        self.upper_surface = []
+        domain_start = Math.integer_division(self.bounding_rect[2], self.sampling_distance)  # left
+        domain_end = Math.integer_division(self.bounding_rect[3], self.sampling_distance)  # right
+        for i in range(self.section_num):
+            y = i * self.section_distance
+            section = self.section_list[i]
+            self.upper_surface.append([])
+            for j in range(int(domain_start), int(domain_end + 1)):
+                x = j * self.sampling_distance
+                origin_pt = gp_Pnt(x, y, self.path_elevation)
+                next_pt = gp_Pnt(x, y, self.path_elevation + self.domain_length)
+                edge = create_edge_from_two_point(origin_pt, next_pt)
+                point = PointObject.create(self, edge, section, Orientation.up)
+                self.upper_surface[i].append(point)
+
+    def left_surface_analysis(self):
+        self.left_surface = []
+        domain_start = Math.integer_division(self.bounding_rect[0], self.sampling_distance)
+        domain_end = Math.integer_division(self.bounding_rect[1], self.sampling_distance)
+        for i in range(self.section_num):
+            y = i * self.section_distance
+            section = self.section_list[i]
+            self.left_surface.append([])
+            for j in range(int(domain_start), int(domain_end + 1)):
+                z = j * self.sampling_distance
+                origin_pt = gp_Pnt(0, y, z)
+                next_pt = gp_Pnt(-self.domain_length, y, z)
+                edge = create_edge_from_two_point(origin_pt, next_pt)
+                point = PointObject.create(self, edge, section, Orientation.left)
+                self.left_surface[i].append(point)
 
     def display_surface_point(self, display, is_show_analysis):
         self.display_bottom_surface(display, is_show_analysis)
+        self.display_right_surface(display, is_show_analysis)
+        self.display_left_surface(display, is_show_analysis)
+        self.display_upper_surface(display, is_show_analysis)
         display.Repaint()
 
     def display_bottom_surface(self, display, is_show_analysis):
@@ -152,7 +194,24 @@ class SurfaceAnalysis(object):
             for j in range(len(self.bottom_surface[i])):
                 if self.bottom_surface[i][j]:
                     self.bottom_surface[i][j].display_point(display, is_show_analysis)
-        pass
+
+    def display_upper_surface(self, display, is_show_analysis):
+        for i in range(len(self.upper_surface)):
+            for j in range(len(self.upper_surface[i])):
+                if self.upper_surface[i][j]:
+                    self.upper_surface[i][j].display_point(display, is_show_analysis)
+
+    def display_left_surface(self, display, is_show_analysis):
+        for i in range(len(self.left_surface)):
+            for j in range(len(self.left_surface[i])):
+                if self.left_surface[i][j]:
+                    self.left_surface[i][j].display_point(display, is_show_analysis)
+
+    def display_right_surface(self, display, is_show_analysis):
+        for i in range(len(self.right_surface)):
+            for j in range(len(self.right_surface[i])):
+                if self.right_surface[i][j]:
+                    self.right_surface[i][j].display_point(display, is_show_analysis)
 
 
 class PointObject(object):
@@ -193,9 +252,9 @@ class PointObject(object):
             color = self.material.get_shading_colour()
             ais_color = OCC.Quantity.Quantity_Color(color[0], color[1], color[2], OCC.Quantity.Quantity_TOC_RGB)
             transparency = self.material.get_transparency()
-        # du, dv = self.get_dimension()
-        # rect = create_rectangle_from_center(self.point, du, dv, self.orientation)
-        self.point_ais = display.DisplayShape(self.point, transparency=transparency)
+        du, dv = self.get_dimension()
+        rect = create_rectangle_from_center(self.point, du, dv, self.orientation)
+        self.point_ais = display.DisplayShape(rect, transparency=transparency)
         self.point_ais.GetObject().SetColor(ais_color)
 
     def get_dimension(self):

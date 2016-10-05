@@ -18,9 +18,6 @@ def drange(start, stop, step):
         r += step
     return float_list
 
-n_procs = processing.cpu_count()
-
-print "n procs: %s" % n_procs
 
 def run(ncprocs, compare_by_number_of_processors=False):
 
@@ -28,7 +25,6 @@ def run(ncprocs, compare_by_number_of_processors=False):
     x_min, y_min, z_min, x_max, y_max, z_max = get_boundingbox()
     z_delta = abs(z_min - z_max)
     n_slice = 50
-
 
     def get_z_coord_for_n_procs(n_slices, n_procs):
         z_slices = drange(z_min, z_max, z_delta/n_slices)
@@ -57,7 +53,7 @@ def run(ncprocs, compare_by_number_of_processors=False):
     if not compare_by_number_of_processors:
         _results = []
         p = processing.Pool(n_procs)
-        _results = p.map(vectorized_slicer, arguments(n_slice, n_procs))
+        #_results = p.map(vectorized_slicer, arguments(n_slice, n_procs))
         pass
     else:
         arr = [[i, shape] for i in drange(z_min,z_max, z_delta/n_slice)]
@@ -65,7 +61,7 @@ def run(ncprocs, compare_by_number_of_processors=False):
             tA = time.time()
             _results = []
             if i == 1:
-                _results = vectorized_slicer,
+                pass#_results = vectorized_slicer,
         pass
     pass
 
@@ -81,4 +77,5 @@ def foo(x):
     return x*x
 
 if __name__ == '__main__':
-    run(n_procs)
+    n_procs = processing.cpu_count()
+    run(n_procs, compare_by_number_of_processors=False)
