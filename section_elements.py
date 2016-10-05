@@ -81,7 +81,6 @@ class Section(object):
                 if not nearest_param or nearest_param[0] > param[0]:
                     nearest_param = param
         if nearest_param:
-            print "nearest param = {}".format(nearest_param)
             point = edge_curve.Value(nearest_param[0])
             return point, nearest_param[1], nearest_param[2]
         else:
@@ -227,16 +226,12 @@ class ElementSection(object):
                             for i in range(commonparts.Length()):
                                 commonpart = commonparts.Value(i+1)
                                 parameter = commonpart.VertexParameter1()
-                                print "parameter"
-                                print self.element.name
-                                print parameter
                                 if parameter > 0.0:
                                     if not nearest_param or nearest_param[0] > parameter:
                                         nearest_param = parameter, self, shape_section
                         exp.Next()
         else:
             for child in self.children:
-                print "children"
                 param = child.nearest_intersection_element(edge)
                 if param:
                     if not nearest_param or nearest_param[0] > param[0]:
