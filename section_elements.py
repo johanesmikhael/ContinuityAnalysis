@@ -100,6 +100,9 @@ class ElementSection(object):
 
     @staticmethod
     def create_element_section(section_plane, element, element_section_parent=None):
+        intersection = ElementSection.check_intersection(section_plane, element)
+        if not intersection:
+            return None
         element_section = None
         if not element.is_decomposed:
             if len(element.topods_shapes) > 0:
@@ -121,6 +124,13 @@ class ElementSection(object):
                     child_section.parent = element_section
                     element_section.children.append(child_section)
         return element_section
+
+    @staticmethod
+    def check_intersection(section_plane, element):
+        section_plane_b_box = section_plane[4]
+        element_b_box = element.bounding_box
+        is_out = element_b_box.IsOut(section_plane_b_box)
+        return not is_out
 
     @staticmethod
     def create_section_from_shape(section_plane, shape):

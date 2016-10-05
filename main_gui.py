@@ -277,7 +277,9 @@ class GuiMainWindow(QtWidgets.QMainWindow):
                 size = self.section_plane_size
                 section_face = BRepBuilderAPI_MakeFace(pt_sec_plane, -size, size, -size, size).Face()
                 section_face_display = display.DisplayShape(section_face, transparency=0.99, color=255)
-                self.section_planes.append((i, section_face, section_face_display, pt_sec_plane))
+                bounding_box = Bnd_Box()
+                brepbndlib_Add(section_face, bounding_box)
+                self.section_planes.append((i, section_face, section_face_display, pt_sec_plane, bounding_box))
             display.Repaint()
             return True
         else:

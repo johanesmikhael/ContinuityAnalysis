@@ -116,3 +116,4 @@ def create_rectangle_from_center(origin_point, du, dv, orientation):
     wire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, True).Wire()
     rectangle_face = BRepBuilderAPI_MakeFace(wire).Face()
     return rectangle_face
+

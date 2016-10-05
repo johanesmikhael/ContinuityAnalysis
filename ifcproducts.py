@@ -10,6 +10,8 @@ import OCC.GeomLProp
 import OCC.Quantity
 import OCC.Aspect
 import OCC.gp
+from OCC.Bnd import Bnd_Box
+from OCC.BRepBndLib import brepbndlib_Add
 from ifcmaterials import *
 
 import sys, inspect
@@ -32,6 +34,12 @@ class ElementSelect():
             return None
         else:
             element = _callable(parent, ifc_instance)
+            BuildingElement.put_shape_to_bounding_box(element, element.bounding_box)
+            print "bounding box of {} :".format(element.name)
+            min = element.bounding_box.CornerMin()
+            max = element.bounding_box.CornerMax()
+            print "{},{},{}".format(min.X(), min.Y(), min.Z())
+            print "{},{},{}".format(max.X(), max.Y(), max.Z())
             return element
 
 
@@ -147,16 +155,27 @@ class BuildingElement(object):
         self.is_decomposed = BuildingElement.check_ifc_is_decomposed(self.ifc_instance)
         self.children = []
         self.main_topods_shape = self.get_topods_shape()
-        self.topods_shapes = []
+        self.topods_shapes = [] # "topods_shape", "material"
         self.main_ais = None
         self.material_dict = self.parent.get_material_dict()
         self.material_information = self.material_dict.get_material_information(self.ifc_instance)
+        self.bounding_box = Bnd_Box()
 
     def get_topods_shape(self):
         if not self.is_decomposed:
             return ifcopenshell.geom.create_shape(self.ifcopenshell_setting, self.ifc_instance).geometry
         else:
             return None
+
+    @staticmethod
+    def put_shape_to_bounding_box(element, bounding_box):
+        if not element.is_decomposed:
+            for shape in element.topods_shapes:
+                print bounding_box
+                brepbndlib_Add(shape["topods_shape"], bounding_box)
+        else:
+            for child in element.children:
+                BuildingElement.put_shape_to_bounding_box(child, bounding_box)
 
     def display_shape(self, display):
         if len(self.children) > 0:
@@ -278,7 +297,6 @@ class BuildingElement(object):
             for ifc_object_definition in ifc_object_definitions:
                 element = element_select.create(self.parent, ifc_object_definition)
                 self.children.append(element)
-
 
     @staticmethod
     def break_faces(current_exp):
