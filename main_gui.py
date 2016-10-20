@@ -10,8 +10,6 @@ from ifcopenshell.geom import occ_utils
 # from OCC.Utils import Topo
 from OCC import V3d
 from OCC.gp import gp_Pln, gp_Dir
-from OCC.GeomAdaptor import GeomAdaptor_Curve
-from OCC.GCPnts import GCPnts_AbscissaPoint
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.TopTools import TopTools_ListIteratorOfListOfShape
 from OCC.TopTools import TopTools_HSequenceOfShape
@@ -22,19 +20,22 @@ from OCC.ShapeAnalysis import ShapeAnalysis_FreeBounds
 
 from OCC.TopoDS import topods_Wire
 
-from multiprocess import *
 
 from ifcproducts import *
 
 from ifcmaterials import *
 
-from visualization_gui import *
+from section_visualization_gui import *
+
+from material_browser_gui import *
 
 from section_elements import *
 
-from quantity import Color
+from util import Color
 
-from multiprocess import run_multiprocess_cut
+from geom import *
+
+from math import pi
 
 
 class GuiMainWindow(QtWidgets.QMainWindow):
@@ -61,16 +62,24 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.ifc_file = None
         self.section_planes = []
         self.section_list = []
+        self.path_mark_edges = []
         self.elements = []
         self.material_dict = MaterialDict()
 
         self.section_visualization_win = None
+        self.material_browser_win = None
 
-        self.section_distance = 0.05
+        self.section_distance = 0.2
         self.path_elevation = 1.2
         self.section_plane_size = 5.0
+        self.max_height_clearance = 2.0
 
         self.viewer_bg_color = Color.white
+
+        self.is_show_section = False
+        self.is_show_plane = False
+
+        self.filename = None
 
     # noinspection PyBroadException
     def setup_ifcopenshell_viewer(self, _app):
@@ -141,10 +150,16 @@ class GuiMainWindow(QtWidgets.QMainWindow):
     def setup_toolbar(self):
         self.add_toolbar("Main Toolbar")
         self.add_function_to_toolbar("Main Toolbar", self.open_file)
+        self.add_function_to_toolbar("Main Toolbar", self.material_browser)
         self.add_function_to_toolbar("Main Toolbar", self.draw_path)
         self.add_function_to_toolbar("Main Toolbar", self.generate_section_plane)
+        self.add_function_to_toolbar("Main Toolbar", self.toggle_plane_view)
         self.add_function_to_toolbar("Main Toolbar", self.process_section)
+        self.add_function_to_toolbar("Main Toolbar", self.toggle_section_view)
         self.add_function_to_toolbar("Main Toolbar", self.analyze_section)
+        self.add_function_to_toolbar("Main Toolbar", self.top_view)
+        self.add_function_to_toolbar("Main Toolbar", self.iso_view)
+
 
     def draw_path(self):
         if self.ifc_file is None:
@@ -164,6 +179,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         root.destroy()
         from os.path import isfile
         if isfile(file_name):
+            self.filename = file_name
             self.close_file()  # reset the program
             self.elements = []
             self.ifc_file = ifcopenshell.open(str(file_name))
@@ -268,7 +284,8 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         crv = self.canvas.get_path_curve()[0]
         display = self.canvas.get_display()
         if crv is not None:
-            div_crv_param = self.divide_curve(crv, section_distance)
+            self.is_show_plane = True
+            div_crv_param = divide_curve(crv, section_distance)
             self.clear_crv_sections()
             for i in div_crv_param:
                 pt = crv.Value(i)
@@ -303,19 +320,8 @@ class GuiMainWindow(QtWidgets.QMainWindow):
     def clear_materials(self):
         self.material_dict = MaterialDict()
 
-    @staticmethod
-    def divide_curve(crv, distance):
-        geom_adaptor_curve = GeomAdaptor_Curve(crv.GetHandle())
-        curve_param = [0.0]
-        param = 0
-        while param < 1:
-            gcpnts_abscissa_point = GCPnts_AbscissaPoint(geom_adaptor_curve, distance, param)
-            param = gcpnts_abscissa_point.Parameter()
-            if param <= 1:
-                curve_param.append(param)
-        return curve_param
-
     def process_section(self):
+        self.is_show_section = True
         self.clear_section()
         if sys.version_info[:3] >= (2, 6, 0):
             import multiprocessing as processing
@@ -330,7 +336,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.section_list = self.create_section(path_curve, self.section_planes, self.elements)
         display = self.canvas.get_display()
         for section in self.section_list:
-            section.display_wire(display)
+            section.display_coloured_wire(display, Color.ais_green)
         display.Repaint()
 
     def clear_section(self):
@@ -353,6 +359,9 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         return section_list
 
     def analyze_section(self):
+        if not self.section_list:
+            print "no section to analyze"
+            return
         if not self.section_visualization_win:
             self.section_visualization_win = GuiVisualization(self)
             self.section_visualization_win.canvas.InitDriver()
@@ -365,4 +374,79 @@ class GuiMainWindow(QtWidgets.QMainWindow):
 
     def get_material_dict(self):
         return self.material_dict
+
+    def toggle_section_view(self):
+        self.is_show_section = not self.is_show_section
+        display = self.canvas.get_display()
+        for section in self.section_list:
+            section.set_visible(display, self.is_show_section)
+
+    def toggle_plane_view(self):
+        display = self.canvas.get_display()
+        self.is_show_plane = not self.is_show_plane
+        for plane in self.section_planes:
+            if self.is_show_plane:
+                display.Context.Display(plane[2])
+            else:
+                display.Context.Erase(plane[2])
+
+    def create_path_annotation(self):
+        self.remove_path_marks()
+        display = self.canvas.get_display()
+        curve = self.canvas.get_path_curve()[0]
+        div_crv_param = divide_curve(curve, 1.0)
+        path_marks = []
+        for n, i in enumerate(div_crv_param):
+            pt = curve.Value(i)
+            pt_vec = curve.DN(i, 1)
+            pt_vec.Normalize()
+            pt_vec.Scale(0.1)
+            axis = gp_Ax1()
+            axis.SetLocation(pt)
+            trans_vec_a = pt_vec.Rotated(axis, pi/2)
+            trans_vec_b = pt_vec.Rotated(axis, -pi/2)
+            pt_a = pt.Translated(trans_vec_a)
+            pt_b = pt.Translated(trans_vec_b)
+            edge = create_edge_from_two_point(pt_a, pt_b)
+            edge_ais = display.DisplayShape(edge)
+            trans_vec_text = trans_vec_a.Scaled(1.2)
+            pt_text = pt.Translated(trans_vec_text)
+            path_mark = (pt_text.X(), pt_text.Y(), pt_text.Z(), str(n))
+            path_marks.append(path_mark)
+            self.path_mark_edges.append((edge, edge_ais))
+        self.canvas._is_draw_path_mark = path_marks
+        pass
+
+    def remove_path_marks(self):
+        display = self.canvas.get_display()
+        for edge in self.path_mark_edges:
+            display.Context.Remove(edge[1])
+        self.path_mark_edges = []
+        self.canvas._is_draw_path_mark = False
+
+    def top_view(self):
+        display = self.canvas.get_display()
+        display.View_Top()
+        display.FitAll()
+        display.ZoomFactor(0.9)
+        pass
+
+    def iso_view(self):
+        display = self.canvas.get_display()
+        display.View_Iso()
+        display.FitAll()
+        display.ZoomFactor(0.9)
+
+    def material_browser(self):
+        if not self.material_dict:
+            print "No material to browse"
+            return
+        if not self.material_browser_win:
+            self.material_browser_win = GuiMaterialBrowser(self)
+        if self.material_browser_win.isVisible():
+            self.material_browser_win.hide()
+        else:
+            self.material_browser_win.show()
+        pass
+
 

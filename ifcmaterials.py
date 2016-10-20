@@ -1,11 +1,27 @@
 class Material(object):
+    reflectance_methods = dict()
+    reflectance_methods[0] = "blinn"  # smooth, slightly shiny appearance.
+    reflectance_methods[1] = "flat"  # constant colour
+    reflectance_methods[2] = "glass"  # glass-like materials
+    reflectance_methods[3] = "matt"  # dull matte appearance
+    reflectance_methods[4] = "metal"  # specular metallic appearanc
+    reflectance_methods[5] = "mirror"  # secondary mirrored views through ray tracing
+    reflectance_methods[6] = "phong"  # specular effect
+    reflectance_methods[7] = "plastic"  # specular effect which is similar to the Phong model
+    reflectance_methods[8] = "strauss" # metallic and non-metallic appearance based on a limited set of control parameter
+
     def __init__(self, ifc_material = None):
         self.ifc_material = ifc_material
         self.surface_style_name = None
         self.surface_colour = None
         self.transparency = None
         self.diffuse_colour = None
+        self.reflection_colour = None
+        self.reflectance = None #not ifc
         self.reflectance_method = None
+        self.reflectance_method_enum = None
+        self.slip_coefficient = None #not ifc
+        self.imperviousness = None #not ifc
         if self.ifc_material:
             self.name = self.ifc_material.Name
             has_representation = self.ifc_material.HasRepresentation
@@ -22,7 +38,10 @@ class Material(object):
                         self.surface_colour = Material.get_rgb_tuple(surface_style_element_select.SurfaceColour)
                         self.transparency = surface_style_element_select.Transparency
                         self.diffuse_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.DiffuseColour)
+                        self.reflection_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.ReflectionColour)
                         self.reflectance_method = surface_style_element_select.ReflectanceMethod
+                        print "reflectance method {}".format(self.reflectance_method)
+                        print "reflection colour {}".format(self.reflection_colour)
             else:
                 self.surface_colour = (0.125, 0.125, 0.125)
                 self.transparency = 0
@@ -35,6 +54,9 @@ class Material(object):
         else:
             return 0.125, 0.125, 0.125
 
+    def set_surface_colour(self, r, g ,b):
+        self.surface_colour = r, g , b
+
     def get_shading_colour(self):  # reduced colour scale to prevent overbright
         r, g, b = self.get_surface_colour()
         constant = 0.3
@@ -44,7 +66,46 @@ class Material(object):
         if self.transparency:
             return self.transparency
         else:
+            return 0.0
+
+    def set_transparency(self, transparency):
+        self.transparency = transparency
+
+    def get_reflectance_method(self):
+        if self.reflectance_method_enum:
+            return self.reflectance_method_enum
+        else:
             return 0
+
+    def set_reflectance_method(self, reflectance_method_enum):
+        self.reflectance_method_enum = reflectance_method_enum
+
+    def get_reflectance(self):
+        if self.reflectance:
+            return self.reflectance
+        else:
+            return 0.0
+
+    def set_reflectance(self, reflectance):
+        self.reflectance = reflectance
+
+    def get_slip_coefficient(self):
+        if self.slip_coefficient:
+            return self.slip_coefficient
+        else:
+            return 0.0
+
+    def set_slip_coefficient(self, slip_coefficient):
+        self.slip_coefficient = slip_coefficient
+
+    def get_imperviousness(self):
+        if self.imperviousness:
+            return self.imperviousness
+        else:
+            return 0.0
+
+    def set_imperviousness(self, imperviousness):
+        self.imperviousness = imperviousness
 
     @staticmethod
     def get_rgb_tuple(ifc_colour_rgb):

@@ -1,6 +1,31 @@
 from OCC.Quantity import Quantity_TOC_RGB, Quantity_Color
 from math import fabs
 
+from xml.etree import ElementTree
+from xml.dom import minidom
+
+
+def prettify(elem):
+    """Return a pretty-printed XML string for the Element.
+    """
+    rough_string = ElementTree.tostring(elem, 'utf-8')
+    reparsed = minidom.parseString(rough_string)
+    return reparsed.toprettyxml(indent="  ")
+
+
+def get_text_from_xml(node):
+    return node.childNodes[0].data
+
+
+def get_float_from_xml(node):
+    text = get_text_from_xml(node)
+    return float(text)
+
+
+def get_int_from_xml(node):
+    float_value = get_float_from_xml(node)
+    return int(float_value)
+
 class Color:
     def __init__(self):
         pass
@@ -14,6 +39,19 @@ class Color:
     ais_green = Quantity_Color(0, 1, 0, Quantity_TOC_RGB)
     ais_red = Quantity_Color(1, 0, 0, Quantity_TOC_RGB)
 
+    @staticmethod
+    def from_factor_to_rgb(r_factor, g_factor, b_factor):
+        r = int(r_factor*255)
+        g = int(g_factor*255)
+        b = int(b_factor*255)
+        return r,g,b
+
+    @staticmethod
+    def from_rgb_to_factor(r, g, b):
+        r_factor = float(r)/255
+        g_factor = float(g)/255
+        b_factor = float(b)/255
+        return r_factor, g_factor, b_factor
 
 class Orientation:
     def __init__(self):

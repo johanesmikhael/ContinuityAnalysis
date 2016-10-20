@@ -1,6 +1,6 @@
 from OCC.gp import gp_Pnt, gp_Trsf, gp_Dir, gp_Ax1
 from geom import *
-from quantity import *
+from util import *
 from OCC.BRepPrimAPI import BRepPrimAPI_MakeSphere
 from math import floor, ceil
 
@@ -110,6 +110,7 @@ class SurfaceAnalysis(object):
         self.upper_surface = None
         self.left_surface = None
         self.sampling_distance = None
+        self.left_lines = None
 
     def perform(self, sampling_distance):
         self.sampling_distance = sampling_distance
@@ -149,6 +150,7 @@ class SurfaceAnalysis(object):
                 edge = create_edge_from_two_point(origin_pt, next_pt)
                 point = PointObject.create(self, edge, section, Orientation.right)
                 self.right_surface[i].append(point)
+
 
     def upper_surface_analysis(self):
         self.upper_surface = []
@@ -261,4 +263,56 @@ class PointObject(object):
         section_distance = self.parent.section_distance
         sampling_distance = self.parent.sampling_distance
         return sampling_distance, section_distance
+
+
+class ClearanceAnalysis(object):
+    def __init__(self, parent):
+        self._parent = parent
+        self.surface_analysis = self._parent.surface_analysis
+        self.section_num = self.surface_analysis.section_num
+        self.max_height = None
+        self.horizontal_clearance = None
+        self.vertical_clearance = None
+
+    def perform(self, max_height):
+        self.vertical_clearance = []
+        self.horizontal_clearance = []
+        self.max_height = max_height
+        for i in range(self.section_num): #analyse each section
+            self.vertical_clearance.append([])
+            bottom_section = self.surface_analysis.bottom_surface[i]
+            upper_section = self.surface_analysis.upper_surface[i]
+            left_section = self.surface_analysis.left_surface[i]
+            right_section = self.surface_analysis.right_surface[i]
+            max_z = None
+            for j in range(len(bottom_section)):
+                bottom_point = bottom_section[j]
+                upper_point = upper_section[j]
+                if bottom_point:
+                    if not max_z or max_z < bottom_point.point.Z():
+                        max_z = bottom_point.point.Z()
+                if upper_point and bottom_point:
+                    vertical_distance = upper_point.point.Z() - bottom_point.point.Z()
+                else:
+                    vertical_distance = None
+                self.vertical_clearance[i].append(vertical_distance)
+            clearance_limit = max_z + self.max_height
+            max_left = None
+            min_right = None
+            for k in range(len(bottom_section)):
+                left_point = None
+                right_point = None
+                if left_section[k]:
+                    left_point = left_section[k]
+                if right_section[k]:
+                    right_point = right_section[k]
+                if left_point:
+                    if left_point.point.Z() <= clearance_limit:
+                        if not max_left or max_left < left_point.point.X():
+                            max_left = left_point.point.X()
+                if right_point:
+                    if right_point.point.Z() <= clearance_limit:
+                        if not min_right or min_right > right_point.point.X():
+                            min_right = right_point.point.X()
+            self.horizontal_clearance.append((max_left, min_right))
 

@@ -9,7 +9,7 @@ from OCC.BRepAdaptor import BRepAdaptor_Curve
 from OCC.TopExp import TopExp_Explorer
 from OCC.TopAbs import *
 from OCC.IntTools import IntTools_EdgeEdge
-
+from OCC.AIS import AIS_Shape
 import OCC.Quantity
 
 from OCC.TopoDS import topods_Wire
@@ -38,6 +38,10 @@ class Section(object):
     def display_wire(self, display):
         for element_section in self._element_section_list:
             element_section.display_wire(display)
+
+    def display_coloured_wire(self, display, quantity_colour):
+        for element_section in self._element_section_list:
+            element_section.display_coloured_wire(display, quantity_colour)
 
     def copy_section(self, section):
         for element_section in section.get_element_section_list():
@@ -169,13 +173,36 @@ class ElementSection(object):
                     ais_color = OCC.Quantity.Quantity_Color(color[0], color[1], color[2], OCC.Quantity.Quantity_TOC_RGB)
                     transparency = material.get_transparency()
                 for shape in shape_section[0]:
-                    ais = display.DisplayShape(shape, transparency=transparency)
+                    # ais = display.DisplayShape(shape, transparency=transparency)
+                    ais_object = AIS_Shape(shape)
+                    ais = ais_object.GetHandle()
                     ais.GetObject().SetColor(ais_color)
+                    display.Context.Display(ais)
+                    display.Context.SetTransparency(ais, transparency)
                     ais_list.append(ais)
             self.ais = ais_list
         else:
             for child in self.children:
                 child.display_wire(display)
+
+    def display_coloured_wire(self, display, quantity_colour):
+        if not self.is_decomposed:
+            ais_list = []
+            for shape_section in self.shapes_section:
+                material = shape_section[1]
+                transparency = 0
+                for shape in shape_section[0]:
+                    # ais = display.DisplayShape(shape, transparency=transparency)
+                    ais_object = AIS_Shape(shape)
+                    ais = ais_object.GetHandle()
+                    ais.GetObject().SetColor(quantity_colour)
+                    display.Context.Display(ais)
+                    display.Context.SetTransparency(ais, transparency)
+                    ais_list.append(ais)
+            self.ais = ais_list
+        else:
+            for child in self.children:
+                child.display_coloured_wire(display, quantity_colour)
 
     def hide_wire(self, display):
         if not self.is_decomposed:

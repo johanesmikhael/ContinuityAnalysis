@@ -7,8 +7,10 @@ from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakePolygon
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.BRepPrimAPI import BRepPrimAPI_MakeBox
+from OCC.GeomAdaptor import GeomAdaptor_Curve
+from OCC.GCPnts import GCPnts_AbscissaPoint
 from OCC.gp import gp_Pnt
-from quantity import *
+from util import *
 import collections
 
 
@@ -104,16 +106,27 @@ def create_rectangle_from_center(origin_point, du, dv, orientation):
         p3 = gp_Pnt(x+du/2, y-dv/2,z)
         p4 = gp_Pnt(x+du/2, y+dv/2,z)
     elif orientation == Orientation.right:
-        p1 = gp_Pnt(x, y-du/2, z+dv/2)
-        p2 = gp_Pnt(x, y-du/2, z-dv/2)
-        p3 = gp_Pnt(x, y+du/2, z-dv/2)
-        p4 = gp_Pnt(x, y+du/2, z+dv/2)
+        p1 = gp_Pnt(x, y-dv/2, z+du/2)
+        p2 = gp_Pnt(x, y-dv/2, z-du/2)
+        p3 = gp_Pnt(x, y+dv/2, z-du/2)
+        p4 = gp_Pnt(x, y+dv/2, z+du/2)
     elif orientation == Orientation.left:
-        p1 = gp_Pnt(x, y-du/2, z-dv/2)
-        p2 = gp_Pnt(x, y-du/2, z+dv/2)
-        p3 = gp_Pnt(x, y+du/2, z+dv/2)
-        p4 = gp_Pnt(x, y+du/2, z-dv/2)
+        p1 = gp_Pnt(x, y-dv/2, z-du/2)
+        p2 = gp_Pnt(x, y-dv/2, z+du/2)
+        p3 = gp_Pnt(x, y+dv/2, z+du/2)
+        p4 = gp_Pnt(x, y+dv/2, z-du/2)
     wire = BRepBuilderAPI_MakePolygon(p1, p2, p3, p4, True).Wire()
     rectangle_face = BRepBuilderAPI_MakeFace(wire).Face()
     return rectangle_face
 
+
+def divide_curve(crv, distance):
+    geom_adaptor_curve = GeomAdaptor_Curve(crv.GetHandle())
+    curve_param = [0.0]
+    param = 0
+    while param < 1:
+        gcpnts_abscissa_point = GCPnts_AbscissaPoint(geom_adaptor_curve, distance, param)
+        param = gcpnts_abscissa_point.Parameter()
+        if param <= 1:
+            curve_param.append(param)
+    return curve_param

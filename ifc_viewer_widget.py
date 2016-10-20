@@ -1,7 +1,7 @@
 from OCC.Display.backend import load_backend
 from OCC.gp import gp_Pnt
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui
 
 from geom import points_to_bezier_curve
 from geom import points_to_bspline_curve
@@ -19,6 +19,7 @@ class IfcViewerWidget(qtViewer3d):
         self._path_curve = [None, None]
         self._preview_curve = [None, None]
         self._path_height = None
+        self._is_draw_path_mark = False
 
     def InitDriver(self):
         super(IfcViewerWidget, self).InitDriver()
@@ -66,6 +67,7 @@ class IfcViewerWidget(qtViewer3d):
                 # self._path_curve[0] = points_to_bezier_curve(self._path_pts)
                 self._path_curve[0] = points_to_bspline_curve(self._path_pts, 3)
                 self._path_curve[1] = self._display.DisplayShape(self._path_curve[0])
+                self._parent.create_path_annotation()
             for pt in self._path_pts:
                 self._display.Context.Remove(pt[1])
             self._path_pts = []
@@ -132,6 +134,11 @@ class IfcViewerWidget(qtViewer3d):
         else:
             self._drawbox = False
             self._display.MoveTo(pt.x, pt.y)
+        self.update()
+
+    def wheelEvent(self, event):
+        super(IfcViewerWidget, self).wheelEvent(event)
+        self.update()
 
     def get_path_curve(self):
         return self._path_curve
@@ -150,6 +157,37 @@ class IfcViewerWidget(qtViewer3d):
 
     def is_draw_path(self):
         return self._is_draw_path
+
+    def draw_path_mark(self, painter):
+        for p in self._is_draw_path_mark:
+            screen_x, screen_y = self._display.View.Convert(p[0], p[1], p[2])
+            painter.drawText(screen_x, screen_y, p[3])
+        pass
+
+    def paintEvent(self, event):
+        if self._inited:
+            self._display.Context.UpdateCurrentViewer()
+            # important to allow overpainting of the OCC OpenGL context in Qt
+            # self.swapBuffers()
+
+        if self._drawbox:
+            self.makeCurrent()
+            painter = QtGui.QPainter(self)
+            painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0), 1))
+            rect = QtCore.QRect(*self._drawbox)
+            self.swapBuffers()
+            painter.drawRect(rect)
+            painter.end()
+            self.doneCurrent()
+
+        if self._is_draw_path_mark:
+            self.makeCurrent()
+            painter = QtGui.QPainter(self)
+            painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0), 1))
+            self.swapBuffers()
+            self.draw_path_mark(painter)
+            painter.end()
+            self.doneCurrent()
 
 
 class Point(object):

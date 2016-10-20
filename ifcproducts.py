@@ -36,10 +36,10 @@ class ElementSelect():
             element = _callable(parent, ifc_instance)
             BuildingElement.put_shape_to_bounding_box(element, element.bounding_box)
             print "bounding box of {} :".format(element.name)
-            min = element.bounding_box.CornerMin()
+            '''min = element.bounding_box.CornerMin()
             max = element.bounding_box.CornerMax()
             print "{},{},{}".format(min.X(), min.Y(), min.Z())
-            print "{},{},{}".format(max.X(), max.Y(), max.Z())
+            print "{},{},{}".format(max.X(), max.Y(), max.Z())'''
             return element
 
 
@@ -171,7 +171,6 @@ class BuildingElement(object):
     def put_shape_to_bounding_box(element, bounding_box):
         if not element.is_decomposed:
             for shape in element.topods_shapes:
-                print bounding_box
                 brepbndlib_Add(shape["topods_shape"], bounding_box)
         else:
             for child in element.children:

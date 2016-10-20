@@ -1,18 +1,5 @@
-from PyQt5 import QtGui, QtCore
-from section_visualization_widget import *
-
-from OCC.gp import gp_Pnt, gp_Trsf, gp_Dir, gp_Ax1
 from OCC.BRepBuilderAPI import BRepBuilderAPI_Transform, BRepBuilderAPI_MakeEdge
-from OCC.Graphic3d import  Graphic3d_EF_SVG
-
-from OCC.TopExp import TopExp_Explorer
-from OCC.TopAbs import *
-from OCC.IntTools import IntTools_EdgeEdge
-
-from OCC.TopoDS import topods
-from OCC.BRepAdaptor import BRepAdaptor_Curve
-
-from geom import points_to_bspline_curve
+from math import pi
 
 from section_elements import *
 
@@ -28,8 +15,11 @@ class SectionAnalyzer(object):
         self.domain_length = None
         self.section_distance = None
         self.section_planes = None
+        self.max_height_clearance = None
         self.dimension_analysis = None
         self.surface_analysis = None
+        self.clearance_analysis = None
+        self.path_mark_edges = []
 
     def add_section(self, section):
         self.section_list.append(section)
@@ -40,6 +30,7 @@ class SectionAnalyzer(object):
         self.domain_length = visualizer.parent.section_plane_size
         self.section_distance = visualizer.parent.section_distance
         self.section_planes = visualizer.parent.section_planes
+        self.max_height_clearance = visualizer.parent.max_height_clearance
         self.get_section()
         self.transform_section()
         self.display_section()
@@ -77,7 +68,8 @@ class SectionAnalyzer(object):
         points = [gp_pnt_0, gp_pnt_1]
         crv = points_to_bspline_curve(points, 1)
         ais = self._visualizer.canvas.get_display().DisplayShape(crv)
-        self.section_axis = [crv, ais]
+        self.section_axis = crv, ais
+        self.create_path_annotation()
 
     @staticmethod
     def get_translation(section_plane_pln, n_section, section_distance, height):
@@ -120,9 +112,10 @@ class SectionAnalyzer(object):
         pass
 
     def analyze_dimension(self):
-        self.dimension_analysis = DimensionAnalysis(self)
-        self.dimension_analysis.perform()
-        self.display_dimension_analysis(True)
+        if not self.dimension_analysis:
+            self.dimension_analysis = DimensionAnalysis(self)
+            self.dimension_analysis.perform()
+            self.display_dimension_analysis(True)
 
     def display_dimension_analysis(self, is_show_analysis):
         display = self._visualizer.canvas.get_display()
@@ -142,5 +135,48 @@ class SectionAnalyzer(object):
         display = self._visualizer.canvas.get_display()
         for section in self.section_list:
             section.set_visible(display, is_show_section)
+
+    def create_path_annotation(self):
+        self.remove_path_marks()
+        display = self._visualizer.canvas.get_display()
+        curve = self.section_axis[0]
+        div_crv_param = divide_curve(curve, 1.0)
+        path_marks = []
+        for n, i in enumerate(div_crv_param):
+            pt = curve.Value(i)
+            pt_vec = curve.DN(i, 1)
+            pt_vec.Normalize()
+            pt_vec_long = pt_vec.Scaled(self.domain_length)
+            pt_vec.Scale(0.1)
+            axis = gp_Ax1()
+            axis.SetLocation(pt)
+            trans_vec_a = pt_vec_long.Rotated(axis, pi/2)
+            trans_vec_b = pt_vec.Rotated(axis, -pi/2)
+            pt_a = pt.Translated(trans_vec_a)
+            pt_b = pt.Translated(trans_vec_b)
+            edge = create_edge_from_two_point(pt_a, pt_b)
+            edge_ais = display.DisplayShape(edge)
+            trans_vec_text = trans_vec_a.Scaled(1.01)
+            pt_text = pt.Translated(trans_vec_text)
+            path_mark = (pt_text.X(), pt_text.Y(), pt_text.Z(), str(n))
+            path_marks.append(path_mark)
+            self.path_mark_edges.append((edge, edge_ais))
+        self._visualizer.canvas._is_draw_path_mark = path_marks
+        pass
+
+    def remove_path_marks(self):
+        display = self._visualizer.canvas.get_display()
+        for edge in self.path_mark_edges:
+            display.Context.Remove(edge[1])
+        self.path_mark_edges = []
+        self._visualizer.canvas._is_draw_path_mark = False
+
+    def analyze_clearance(self):
+        if not self.surface_analysis:
+            print "no surface analysis"
+            return
+        self.clearance_analysis = ClearanceAnalysis(self)
+        self.clearance_analysis.perform(self.max_height_clearance)
+
 
 
