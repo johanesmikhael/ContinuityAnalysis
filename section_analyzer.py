@@ -31,6 +31,7 @@ class SectionAnalyzer(object):
         self.section_distance = visualizer.parent.section_distance
         self.section_planes = visualizer.parent.section_planes
         self.max_height_clearance = visualizer.parent.max_height_clearance
+        self.min_horizontal_clearance = visualizer.parent.min_horizontal_clearance
         self.get_section()
         self.transform_section()
         self.display_section()
@@ -87,7 +88,7 @@ class SectionAnalyzer(object):
         gp_dir = gp_Dir(0.0, 1.0, 0.0) # toward y axis
         gp_axis_1 = gp_Ax1(gp_point_1, gp_dir)
         rotation_angle = gp_axis_0.Angle(gp_axis_1)
-        print rotation_angle
+        print(rotation_angle)
         rotation_axis = gp_Ax1()
         rotation_axis.SetLocation(gp_point_1)
         gp_trsf = gp_Trsf()
@@ -116,6 +117,7 @@ class SectionAnalyzer(object):
             self.dimension_analysis = DimensionAnalysis(self)
             self.dimension_analysis.perform()
             self.display_dimension_analysis(True)
+            print("DIMENSION ANALYSIS DONE")
 
     def display_dimension_analysis(self, is_show_analysis):
         display = self._visualizer.canvas.get_display()
@@ -125,7 +127,8 @@ class SectionAnalyzer(object):
         if self.dimension_analysis:
             self.surface_analysis = SurfaceAnalysis(self)
             self.surface_analysis.perform(0.05)
-            self.display_surface_analysis(True)
+            print("SURFACE ANALYSIS DONE")
+            #self.display_surface_analysis(True)
 
     def display_surface_analysis(self, is_show_analysis):
         display = self._visualizer.canvas.get_display()
@@ -152,6 +155,12 @@ class SectionAnalyzer(object):
             axis.SetLocation(pt)
             trans_vec_a = pt_vec_long.Rotated(axis, pi/2)
             trans_vec_b = pt_vec.Rotated(axis, -pi/2)
+            dir_y = gp_Dir(0,1,0)
+            axis_y = gp_Ax1()
+            axis_y.SetLocation(pt)
+            axis_y.SetDirection(dir_y)
+            trans_vec_a = trans_vec_a.Rotated(axis_y, pi/2)
+            trans_vec_b = trans_vec_b.Rotated(axis_y, pi/2)
             pt_a = pt.Translated(trans_vec_a)
             pt_b = pt.Translated(trans_vec_b)
             edge = create_edge_from_two_point(pt_a, pt_b)
@@ -173,10 +182,11 @@ class SectionAnalyzer(object):
 
     def analyze_clearance(self):
         if not self.surface_analysis:
-            print "no surface analysis"
+            print("no surface analysis")
             return
         self.clearance_analysis = ClearanceAnalysis(self)
         self.clearance_analysis.perform(self.max_height_clearance)
+        print("CLEARANCE ANALYSIS DONE")
 
 
 

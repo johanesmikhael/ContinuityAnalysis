@@ -10,9 +10,9 @@ else:
 def drange(start, stop, step):
     float_list = []
     r = start
-    print start
-    print stop
-    print step
+    print(start)
+    print(stop)
+    print(step)
     while r < stop-step:
         float_list.append(r)
         r += step
@@ -31,7 +31,7 @@ def run(ncprocs, compare_by_number_of_processors=False):
         slices = []
         n = len(z_slices) // n_procs
         for i in range(1, n_procs+1):
-            print i
+            print(i)
             if i == 1:
                 slices.append(z_slices[:i*n])
                 pass

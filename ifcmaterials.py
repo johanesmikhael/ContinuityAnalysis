@@ -40,8 +40,8 @@ class Material(object):
                         self.diffuse_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.DiffuseColour)
                         self.reflection_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.ReflectionColour)
                         self.reflectance_method = surface_style_element_select.ReflectanceMethod
-                        print "reflectance method {}".format(self.reflectance_method)
-                        print "reflection colour {}".format(self.reflection_colour)
+                        print("reflectance method {}".format(self.reflectance_method))
+                        print("reflection colour {}".format(self.reflection_colour))
             else:
                 self.surface_colour = (0.125, 0.125, 0.125)
                 self.transparency = 0
@@ -147,24 +147,24 @@ class MaterialDict(object):
         else:
             material_name = "default_material"
         if material_name in self.material_dict:  # material already exist
-            print "material \"%s\" already exist in material list" % material_name
+            print("material \"%s\" already exist in material list" % material_name)
             material = self.material_dict[material_name]
             return material
         else:  # create materials
-            print "material \"%s\" is not exist in material list" % material_name
+            print("material \"%s\" is not exist in material list" % material_name)
             material = Material(ifc_material)
-            print material.get_surface_colour()
+            print(material.get_surface_colour())
             self.material_dict[material_name] = material
             return material
 
     def add_material_by_style_select(self, style_select):
         material_name = style_select.Name
         if material_name in self.material_dict:
-            print "material \"%s\" already exist in material list" % material_name
+            print("material \"%s\" already exist in material list" % material_name)
             material = self.material_dict[material_name]
             return material
         else:
-            print "material \"%s\" is not exist in material list" % material_name
+            print("material \"%s\" is not exist in material list" % material_name)
             material = Material()
             surface_style_element_select = style_select.Styles[0]
             surface_color = Material.get_rgb_tuple(surface_style_element_select.SurfaceColour)
@@ -172,7 +172,7 @@ class MaterialDict(object):
             material.transparency = surface_style_element_select.Transparency
             material.diffuse_colour = Material.get_rgb_tuple_or_factor(surface_style_element_select.DiffuseColour)
             material.reflectance_method = surface_style_element_select.ReflectanceMethod
-            print material.get_surface_colour()
+            print(material.get_surface_colour())
             self.material_dict[material_name] = material
             return material
         pass
@@ -224,7 +224,7 @@ class MaterialDict(object):
     def get_material_list(self, relating_material):
         material_list = []
         for ifc_material in relating_material.Materials:
-            print ifc_material
+            print(ifc_material)
             material = self.add_material(ifc_material)
             material_list.append(material)
         return material_list

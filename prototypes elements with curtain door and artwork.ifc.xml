@@ -1,149 +1,6 @@
 <?xml version="1.0" ?>
   <materials>
     <material>
-      <name>Glass, White, High Luminance</name>
-      <surface_color>
-        <red>0.976470588235</red>
-        <green>0.980392156863</green>
-        <blue>0.976470588235</blue>
-      </surface_color>
-      <transparency>0.79</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Picture</name>
-      <surface_color>
-        <red>0.76862745098</red>
-        <green>0.772549019608</green>
-        <blue>0.694117647059</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Aluminum</name>
-      <surface_color>
-        <red>0.96862745098</red>
-        <green>0.96862745098</green>
-        <blue>0.96862745098</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>4</reflectance_method>
-      <reflectance>0.53</reflectance>
-      <slip_coefficient>0.49</slip_coefficient>
-      <imperviousness>0.96</imperviousness>
-    </material>
-    <material>
-      <name>Glass</name>
-      <surface_color>
-        <red>0.0</red>
-        <green>0.501960784314</green>
-        <blue>0.752941176471</blue>
-      </surface_color>
-      <transparency>0.75</transparency>
-      <reflectance_method>2</reflectance_method>
-      <reflectance>0.8</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Default</name>
-      <surface_color>
-        <red>0.498039215686</red>
-        <green>0.498039215686</green>
-        <blue>0.498039215686</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Concrete, Cast-in-Place gray</name>
-      <surface_color>
-        <red>0.752941176471</red>
-        <green>0.752941176471</green>
-        <blue>0.752941176471</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Brick, Common</name>
-      <surface_color>
-        <red>0.666666666667</red>
-        <green>0.392156862745</green>
-        <blue>0.411764705882</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Frame - Wood</name>
-      <surface_color>
-        <red>0.258823529412</red>
-        <green>0.152941176471</green>
-        <blue>0.125490196078</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Vinyl Composition Tile</name>
-      <surface_color>
-        <red>0.498039215686</red>
-        <green>0.498039215686</green>
-        <blue>0.498039215686</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Paint</name>
-      <surface_color>
-        <red>0.470588235294</red>
-        <green>0.470588235294</green>
-        <blue>0.470588235294</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
-      <name>Metal - Paint Finish - Grey</name>
-      <surface_color>
-        <red>0.407843137255</red>
-        <green>0.407843137255</green>
-        <blue>0.407843137255</blue>
-      </surface_color>
-      <transparency>0.0</transparency>
-      <reflectance_method>0</reflectance_method>
-      <reflectance>0.0</reflectance>
-      <slip_coefficient>0.0</slip_coefficient>
-      <imperviousness>0.0</imperviousness>
-    </material>
-    <material>
       <name>default_material</name>
       <surface_color>
         <red>0.125</red>
@@ -157,11 +14,11 @@
       <imperviousness>0.0</imperviousness>
     </material>
     <material>
-      <name>Ceiling Tile 600 x 1200</name>
+      <name>Picture</name>
       <surface_color>
-        <red>0.945098039216</red>
-        <green>0.945098039216</green>
-        <blue>0.945098039216</blue>
+        <red>0.768627450980392</red>
+        <green>0.772549019607843</green>
+        <blue>0.694117647058824</blue>
       </surface_color>
       <transparency>0.0</transparency>
       <reflectance_method>0</reflectance_method>
@@ -170,11 +27,63 @@
       <imperviousness>0.0</imperviousness>
     </material>
     <material>
-      <name>Wood - Birch</name>
+      <name>Frame - Wood</name>
       <surface_color>
-        <red>0.650980392157</red>
-        <green>0.454901960784</green>
-        <blue>0.203921568627</blue>
+        <red>0.258823529411765</red>
+        <green>0.152941176470588</green>
+        <blue>0.125490196078431</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Glass</name>
+      <surface_color>
+        <red>0.0</red>
+        <green>0.501960784313725</green>
+        <blue>0.752941176470588</blue>
+      </surface_color>
+      <transparency>0.75</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Brick, Common</name>
+      <surface_color>
+        <red>0.666666666666667</red>
+        <green>0.392156862745098</green>
+        <blue>0.411764705882353</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Concrete, Cast-in-Place gray</name>
+      <surface_color>
+        <red>0.752941176470588</red>
+        <green>0.752941176470588</green>
+        <blue>0.752941176470588</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Vinyl Composition Tile</name>
+      <surface_color>
+        <red>0.498039215686275</red>
+        <green>0.498039215686275</green>
+        <blue>0.498039215686275</blue>
       </surface_color>
       <transparency>0.0</transparency>
       <reflectance_method>0</reflectance_method>
@@ -185,9 +94,100 @@
     <material>
       <name>Steel, Paint Finish, Ivory, Glossy</name>
       <surface_color>
-        <red>0.96862745098</red>
-        <green>0.96862745098</green>
-        <blue>0.937254901961</blue>
+        <red>0.968627450980392</red>
+        <green>0.968627450980392</green>
+        <blue>0.937254901960784</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Default</name>
+      <surface_color>
+        <red>0.498039215686275</red>
+        <green>0.498039215686275</green>
+        <blue>0.498039215686275</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Aluminum</name>
+      <surface_color>
+        <red>0.4588235294117647</red>
+        <green>0.12156862745098039</green>
+        <blue>0.0196078431372549</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Metal - Paint Finish - Grey</name>
+      <surface_color>
+        <red>0.407843137254902</red>
+        <green>0.407843137254902</green>
+        <blue>0.407843137254902</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Glass, White, High Luminance</name>
+      <surface_color>
+        <red>0.976470588235294</red>
+        <green>0.980392156862745</green>
+        <blue>0.976470588235294</blue>
+      </surface_color>
+      <transparency>0.79</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Paint</name>
+      <surface_color>
+        <red>0.0</red>
+        <green>0.3333333333333333</green>
+        <blue>1.0</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Ceiling Tile 600 x 1200</name>
+      <surface_color>
+        <red>0.945098039215686</red>
+        <green>0.945098039215686</green>
+        <blue>0.945098039215686</blue>
+      </surface_color>
+      <transparency>0.0</transparency>
+      <reflectance_method>0</reflectance_method>
+      <reflectance>0.0</reflectance>
+      <slip_coefficient>0.0</slip_coefficient>
+      <imperviousness>0.0</imperviousness>
+    </material>
+    <material>
+      <name>Wood - Birch</name>
+      <surface_color>
+        <red>0.650980392156863</red>
+        <green>0.454901960784314</green>
+        <blue>0.203921568627451</blue>
       </surface_color>
       <transparency>0.0</transparency>
       <reflectance_method>0</reflectance_method>

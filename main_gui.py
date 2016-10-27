@@ -37,6 +37,9 @@ from geom import *
 
 from math import pi
 
+from tkinter import Tk
+import tkinter.filedialog
+from os.path import isfile
 
 class GuiMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args):
@@ -69,10 +72,11 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.section_visualization_win = None
         self.material_browser_win = None
 
-        self.section_distance = 0.2
+        self.section_distance = 0.5
         self.path_elevation = 1.2
         self.section_plane_size = 5.0
         self.max_height_clearance = 2.0
+        self.min_horizontal_clearance = 2.4
 
         self.viewer_bg_color = Color.white
 
@@ -163,21 +167,18 @@ class GuiMainWindow(QtWidgets.QMainWindow):
 
     def draw_path(self):
         if self.ifc_file is None:
-            print "no file opened"
+            print("no file opened")
             return
         if not self.canvas.is_draw_path():
             self.canvas.set_draw_path_mode(True)
         else:
-            print "drawing mode already On"
+            print("drawing mode already On")
 
     def open_file(self):
-        from Tkinter import Tk
-        import tkFileDialog
         root = Tk()
         root.withdraw()
-        file_name = tkFileDialog.askopenfilename(filetypes=[("IFC files", "*.ifc")])
+        file_name = tkinter.filedialog.askopenfilename(filetypes=[("IFC files", "*.ifc")])
         root.destroy()
-        from os.path import isfile
         if isfile(file_name):
             self.filename = file_name
             self.close_file()  # reset the program
@@ -186,7 +187,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
             self.process_file()
             # self.display_ifc_file()
         else:
-            print "No file opened"
+            print("No file opened")
         self.display_elements()
 
     def process_file(self):
@@ -235,7 +236,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
                     self.elements.append(stair)
                     pass
                 if element.is_a("IfcRamp"):
-                    print "RAMP IS NOT IMPLEMENTED YET"
+                    print("RAMP IS NOT IMPLEMENTED YET")
                     pass
                 if element.is_a("IfcRoof"):
                     roof = element_select.create(self, element)
@@ -257,8 +258,8 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         for spatial_structure_element in spatial_structure_elements:
             if spatial_structure_element.is_a("IfcSite"):
                 site = Site(self, spatial_structure_element)
-                print site
-                print site.main_topods_shape
+                print(site)
+                print(site.main_topods_shape)
                 self.elements.append(site)
 
     def close_file(self):
@@ -278,7 +279,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
     def generate_section_plane(self):
         section_success = self.create_section_plane(self.section_distance)
         if not section_success:
-            print "no curve drawn yet"
+            print("no curve drawn yet")
 
     def create_section_plane(self, section_distance):
         crv = self.canvas.get_path_curve()[0]
@@ -330,7 +331,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         n_procs = processing.cpu_count()
 
         if len(self.section_planes) == 0:
-            print "No section planes to intersect with"
+            print("No section planes to intersect with")
             return
         path_curve = self.canvas.get_path_curve()[0]
         self.section_list = self.create_section(path_curve, self.section_planes, self.elements)
@@ -360,7 +361,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
 
     def analyze_section(self):
         if not self.section_list:
-            print "no section to analyze"
+            print("no section to analyze")
             return
         if not self.section_visualization_win:
             self.section_visualization_win = GuiVisualization(self)
@@ -439,7 +440,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
 
     def material_browser(self):
         if not self.material_dict:
-            print "No material to browse"
+            print("No material to browse")
             return
         if not self.material_browser_win:
             self.material_browser_win = GuiMaterialBrowser(self)

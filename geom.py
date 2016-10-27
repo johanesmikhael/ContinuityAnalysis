@@ -54,14 +54,14 @@ def points_to_bspline_curve(points, degree):
         mult_array.append(1)
     mult_array.append(knots_size - knot_sum)
     knot_array = divide_range(0.0, 1.0, len(mult_array)-1)
-    print knots_size
-    print mult_array
-    print knot_array
+    print(knots_size)
+    print(mult_array)
+    print(knot_array)
     knots = TColStd_Array1OfReal(0, len(mult_array) - 1)
     mult = TColStd_Array1OfInteger(0, len(mult_array) - 1)
     i = 0.0
     for n in range(0, len(mult_array)):
-        print n
+        print(n)
         mult.SetValue(n, mult_array[n])
         knots.SetValue(n, knot_array[n])
         i += 1.0

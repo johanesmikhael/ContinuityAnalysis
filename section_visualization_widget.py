@@ -2,7 +2,8 @@ from OCC.Display.backend import load_backend
 from PyQt5 import QtCore
 
 # load_backend("qt-pyqt4")
-from OCC.Display.qtDisplay import qtViewer3d
+# from OCC.Display.qtDisplay import qtViewer3d
+from qt_display_opengl import qtViewer3d
 from PyQt5 import QtGui
 
 
@@ -43,16 +44,16 @@ class SectionVisualizationWidget(qtViewer3d):
             painter = QtGui.QPainter(self)
             painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0), 1))
             rect = QtCore.QRect(*self._drawbox)
-            self.swapBuffers()
+            # self.swapBuffers()
             painter.drawRect(rect)
             painter.end()
             self.doneCurrent()
 
-        if self._is_draw_path_mark:
+        '''if self._is_draw_path_mark:
             self.makeCurrent()
             painter = QtGui.QPainter(self)
             painter.setPen(QtGui.QPen(QtGui.QColor(0, 0, 0), 1))
             self.swapBuffers()
             self.draw_path_mark(painter)
             painter.end()
-            self.doneCurrent()
+            self.doneCurrent()'''

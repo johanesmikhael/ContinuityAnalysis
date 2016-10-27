@@ -38,13 +38,13 @@ def run_multiprocess_cut(s_planes, elements, n_procs):
         _tmp = []
         divided_section_planes = get_section_planes_for_n_procs(section_planes, n_procs)
         for i in divided_section_planes:
-            print i
+            print(i)
             _tmp.append([i, elem])
         return _tmp
 
     P = processing.Pool(n_procs)
     _results = P.map(create_section, arguments(s_planes, elements,n_procs))
-    print _results
+    print(_results)
     return _results
 
 

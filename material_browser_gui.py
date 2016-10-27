@@ -12,6 +12,7 @@ from util import Color, prettify, get_float_from_xml, get_text_from_xml, get_int
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 from xml.dom.minidom import Document, parse, parseString
 
+
 class GuiMaterialBrowser(QtWidgets.QWidget):
     def __init__(self, *args):
         self.parent = args[0]
@@ -48,7 +49,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
     def load_materials(self):
         material_dict = self.materials.material_dict
         self.material_list_widget.clear()
-        for name, material in material_dict.iteritems():
+        for name, material in material_dict.items():
             item = QListWidgetItem()
             item.setText(name)
             item.setData(Qt.UserRole + 1, material)
@@ -87,7 +88,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
     def set_reflectance_method_combo_box_values(self):
         combo_box = self.ui.comboBox_reflectiveMethod
         reflectance_methods = Material.reflectance_methods
-        for key, value in reflectance_methods.iteritems():
+        for key, value in reflectance_methods.items():
             combo_box.addItem(value, key)
 
     def set_reflectance_method_combo_box(self, material):
@@ -184,7 +185,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         material_dict = self.materials.material_dict
         filename = self.parent.filename
         materials_xml = Element("materials")
-        for name, material in material_dict.iteritems():
+        for name, material in material_dict.items():
             material_xml = SubElement(materials_xml, "material")
             name_xml = SubElement(material_xml, "name")
             name_xml.text = name
@@ -205,7 +206,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
             slip_coefficient_xml.text = str(material.get_slip_coefficient())
             imperviousness_xml = SubElement(material_xml, "imperviousness")
             imperviousness_xml.text = str(material.get_imperviousness())
-        print prettify(materials_xml)
+        print(prettify(materials_xml))
 
     def save_xml_doc(self):
         material_dict = self.materials.material_dict
@@ -213,7 +214,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         filename = self.parent.filename
         materials_xml = doc.createElement("materials")
         doc.appendChild(materials_xml)
-        for name, material in material_dict.iteritems():
+        for name, material in material_dict.items():
             material_xml = doc.createElement("material")
             materials_xml.appendChild(material_xml)
             name_xml = doc.createElement("name")
@@ -268,7 +269,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
             dom = parse(filename+".xml")
             self.process_xml(dom)
         else:
-            print "no xml data"
+            print("no xml data")
         pass
 
     def process_xml(self, dom):

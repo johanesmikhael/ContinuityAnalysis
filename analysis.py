@@ -14,6 +14,7 @@ class DimensionAnalysis(object):
         self.section_distance = self._parent.section_distance
         self.path_elevation = self._parent.path_elevation
         self.domain_length = self._parent.domain_length
+        self.min_horizontal_clearance = self._parent.min_horizontal_clearance
         self.horizontal_dimension_edge_list = []
         self.vertical_dimension_edge_list = []
         self.horizontal_dimension_num_list = []
@@ -40,7 +41,7 @@ class DimensionAnalysis(object):
             self.update_horizontal_bound(horizontal_section_points)
             self.vertical_dimension_edge_list.append(create_edge_to_points(origin_point, vertical_section_points))
             self.horizontal_dimension_edge_list.append(create_edge_to_points(origin_point, horizontal_section_points))
-        print self.bounding_rect
+        print(self.bounding_rect)
 
     def update_vertical_bound(self, vertical_points):
         bottom_pnt = vertical_points[0]
@@ -71,7 +72,7 @@ class DimensionAnalysis(object):
     def display_horizontal_edges(self, display, is_show_analysis):
         if is_show_analysis:
             if not len(self.horizontal_dimension_edge_ais_list) > 0:
-                self.create_display_edges(display, self.horizontal_dimension_edge_list, self.horizontal_dimension_edge_ais_list, Color.ais_red)
+                self.create_display_edges(display, self.horizontal_dimension_edge_list, self.horizontal_dimension_edge_ais_list, Color.ais_green)
             else:
                 self.display_edges(display, self.horizontal_dimension_edge_ais_list, True)
         else:
@@ -270,9 +271,13 @@ class ClearanceAnalysis(object):
         self._parent = parent
         self.surface_analysis = self._parent.surface_analysis
         self.section_num = self.surface_analysis.section_num
+        self.section_distance = self.surface_analysis.section_distance
+        self.sampling_distance = self.surface_analysis.sampling_distance
         self.max_height = None
         self.horizontal_clearance = None
         self.vertical_clearance = None
+        self.vertical_clearance_min = None
+        self.vertical_clearance_max = None
 
     def perform(self, max_height):
         self.vertical_clearance = []
@@ -284,27 +289,34 @@ class ClearanceAnalysis(object):
             upper_section = self.surface_analysis.upper_surface[i]
             left_section = self.surface_analysis.left_surface[i]
             right_section = self.surface_analysis.right_surface[i]
-            max_z = None
+            min_z = None
             for j in range(len(bottom_section)):
                 bottom_point = bottom_section[j]
                 upper_point = upper_section[j]
                 if bottom_point:
-                    if not max_z or max_z < bottom_point.point.Z():
-                        max_z = bottom_point.point.Z()
+                    if not min_z or min_z > bottom_point.point.Z():
+                        min_z = bottom_point.point.Z()
                 if upper_point and bottom_point:
-                    vertical_distance = upper_point.point.Z() - bottom_point.point.Z()
+                    vertical_distance = (upper_point.point.Z() - bottom_point.point.Z()), bottom_point
                 else:
                     vertical_distance = None
+                if vertical_distance:
+                    if not self.vertical_clearance_min or self.vertical_clearance_min > vertical_distance[0]:
+                        self.vertical_clearance_min = vertical_distance[0]
+                    if not self.vertical_clearance_max or self.vertical_clearance_max < vertical_distance[0]:
+                        self.vertical_clearance_max = vertical_distance[0]
                 self.vertical_clearance[i].append(vertical_distance)
-            clearance_limit = max_z + self.max_height
+            clearance_limit = min_z + self.max_height
+            print(min_z)
+            print(clearance_limit)
             max_left = None
             min_right = None
             for k in range(len(bottom_section)):
                 left_point = None
                 right_point = None
-                if left_section[k]:
+                if k < len(left_section):
                     left_point = left_section[k]
-                if right_section[k]:
+                if k < len(right_section):
                     right_point = right_section[k]
                 if left_point:
                     if left_point.point.Z() <= clearance_limit:

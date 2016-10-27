@@ -17,7 +17,7 @@ from ifcmaterials import *
 import sys, inspect
 
 
-class ElementSelect():
+class ElementSelect:
     def __init__(self):
         self.create_function_dict = dict()
 
@@ -30,12 +30,12 @@ class ElementSelect():
         ifc_element_type_name = ifc_instance.is_a()
         _callable = self.create_function_dict[ifc_element_type_name]
         if _callable is None:
-            print "Selected element type is not exist"
+            print("Selected element type is not exist")
             return None
         else:
             element = _callable(parent, ifc_instance)
             BuildingElement.put_shape_to_bounding_box(element, element.bounding_box)
-            print "bounding box of {} :".format(element.name)
+            print("bounding box of {} :".format(element.name))
             '''min = element.bounding_box.CornerMin()
             max = element.bounding_box.CornerMax()
             print "{},{},{}".format(min.X(), min.Y(), min.Z())
@@ -595,7 +595,7 @@ class Site(BuildingElement):
             for ifc_representation in representation.Representations:
                 if ifc_representation.RepresentationIdentifier == "Body":
                     representation_items = ifc_representation.Items
-                    print representation_items
+                    print(representation_items)
                     for representation_item in representation_items:
                         fsbm_faces = representation_item.FbsmFaces
                         if representation_item.StyledByItem:
@@ -611,7 +611,7 @@ class Site(BuildingElement):
                             for fsbm_face in fsbm_faces:
                                 material_list.append(None)
             shape_iterator = OCC.TopoDS.TopoDS_Iterator(self.main_topods_shape)
-            print len(material_list)
+            print(len(material_list))
             j = 0
             while shape_iterator.More():
                 topods_shape = shape_iterator.Value()
