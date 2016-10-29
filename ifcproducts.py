@@ -26,14 +26,14 @@ class ElementSelect:
         self.create_function_dict[ifc_element_type_name] = _callable
 
     def create(self, *args):
-        parent, ifc_instance = args
+        parent, ifc_instance, parent_elem = args
         ifc_element_type_name = ifc_instance.is_a()
         _callable = self.create_function_dict[ifc_element_type_name]
         if _callable is None:
             print("Selected element type is not exist")
             return None
         else:
-            element = _callable(parent, ifc_instance)
+            element = _callable(parent, ifc_instance, parent_elem)
             BuildingElement.put_shape_to_bounding_box(element, element.bounding_box)
             print("bounding box of {} :".format(element.name))
             '''min = element.bounding_box.CornerMin()
@@ -144,10 +144,21 @@ def create_building_element_proxy(*args):
 element_select.add_function_to_dict("IfcBuildingElementProxy", create_building_element_proxy)
 
 
+def get_parent_element(element):
+    print(element)
+    _element = element
+    parent_element = element.parent_elem
+    while parent_element is not None:
+        _element = parent_element
+        parent_element = parent_element.parent_elem
+    return _element
+
+
 class BuildingElement(object):
     def __init__(self, *args):
-        parent, ifc_instance = args
+        parent, ifc_instance, parent_elem = args
         self.parent = parent
+        self.parent_elem = parent_elem
         self.ifcopenshell_setting = self.parent.ifcopenshell_setting
         self.ifc_instance = ifc_instance
         self.name = ifc_instance.Name
@@ -294,7 +305,7 @@ class BuildingElement(object):
         for ifc_rel_decompose in ifc_rel_decomposes:
             ifc_object_definitions = ifc_rel_decompose.RelatedObjects
             for ifc_object_definition in ifc_object_definitions:
-                element = element_select.create(self.parent, ifc_object_definition)
+                element = element_select.create(self.parent, ifc_object_definition, self)
                 self.children.append(element)
 
     @staticmethod

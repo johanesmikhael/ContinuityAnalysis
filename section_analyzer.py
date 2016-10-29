@@ -124,6 +124,8 @@ class SectionAnalyzer(object):
         self.dimension_analysis.display_dimension_edges(display, is_show_analysis)
 
     def analyze_surface(self):
+        if self.surface_analysis:
+            return
         if self.dimension_analysis:
             self.surface_analysis = SurfaceAnalysis(self)
             self.surface_analysis.perform(0.05)

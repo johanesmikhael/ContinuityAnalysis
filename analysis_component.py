@@ -5,9 +5,10 @@ from PyQt5.QtCore import qAbs, QLineF, QPointF, qrand, QRectF, QSizeF, qsrand, Q
 from PyQt5.QtGui import QPen, QColor, QBrush
 from util import Math
 from util import Color, ColorInterpolation
+from ifcproducts import get_parent_element
 
 
-class BaseGraphic(QGraphicsItemGroup):
+class BaseGraphic(object):
     def __init__(self, *args):
         super(BaseGraphic, self).__init__()
         self.label = args[3]
@@ -25,15 +26,29 @@ class BaseGraphic(QGraphicsItemGroup):
         self.section_distance = self.section_analyzer.section_distance
         self.length_multiplier = 100.0
         self.height_multiplier = 100.0
-        self.line_extend = 10
-        self.margin = 30
+        self.line_extend = 20
+        self.margin = 50
+        self.material_legend = MaterialLegend(self)
         self._inited = False
+        self.items = []
+        self.add_title()
+
+    def add_title(self):
+        if self.label:
+            title = QGraphicsSimpleTextItem(self.label)
+            title.setPos(self.position[0] + self.margin, self.position[1] + self.line_extend)
+            self.addToGroup(title)
+
+    def addToGroup(self, item):
+        self.items.append(item)
 
     def create_distance_pointer(self):
         self.distance_pointer = QGraphicsLineItem()
         pen = QPen()
-        pen.setWidthF(0.5)
+        pen.setWidthF(1.0)
         pen.setStyle(Qt.DashDotLine)
+        color = Color.create_qcolor_from_rgb_tuple_f((1,0,0))
+        pen.setColor(color)
         self.distance_pointer.setPen(pen)
         self.distance_pointer.setZValue(1.0)
         self.addToGroup(self.distance_pointer)
@@ -53,7 +68,6 @@ class BaseGraphic(QGraphicsItemGroup):
         if self.content_height and self.content_width:
             self.width = self.content_width + self.margin * 2
             self.height = self.content_height + self.margin * 2
-        bounding_rect = self.boundingRect()
         # bounding_rect.setWidth(self.width)
         # bounding_rect.setHeight(self.height)
 
@@ -76,6 +90,13 @@ class BaseGraphic(QGraphicsItemGroup):
             qcolor = Color.create_qcolor_from_rgb_tuple_f(color)
             brush = QBrush(qcolor)
             rect.setBrush(brush)
+
+    def create_legend(self):
+        x = self.position[0] + self.width
+        y = self.position[1]
+        self.material_legend.create_material_legend(x, y)
+        for item in self.material_legend.graphic_items:
+            self.addToGroup(item)
 
 
 class ClearanceWidthGraph(BaseGraphic):
@@ -149,6 +170,28 @@ class ClearanceWidthGraph(BaseGraphic):
             scale_text = QGraphicsSimpleTextItem("%.2f" % float(i))
             scale_text.setPos(x, y)
             self.addToGroup(scale_text)
+        start_to_zero = self.graph_zero[1] - self.position[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y - i * 25
+                text = QGraphicsSimpleTextItem("-%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
+        start_to_zero = self.position[1] + self.height - self.graph_zero[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y + i * 25
+                text = QGraphicsSimpleTextItem("%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
 
     def add_clearance_graph(self):
         print("-----------------------------------------")
@@ -258,6 +301,28 @@ class ClearanceHeightGraph(BaseGraphic):
             scale_text = QGraphicsSimpleTextItem("%.2f" % float(i))
             scale_text.setPos(x, y)
             self.addToGroup(scale_text)
+        start_to_zero = self.graph_zero[1] - self.position[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y - i * 25
+                text = QGraphicsSimpleTextItem("-%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
+        start_to_zero = self.position[1] + self.height - self.graph_zero[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y + i * 25
+                text = QGraphicsSimpleTextItem("%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
 
     def add_height_clearance_graph(self):
         vertical_clearance = self.clearance_analysis.vertical_clearance
@@ -284,12 +349,15 @@ class ClearanceHeightGraph(BaseGraphic):
                     pass
 
     def add_color_scale(self):
-        x_init = self.graph_zero[0] + self.line_extend
-        y_init = self.graph_zero[1] + abs(self.dimension_analysis.bounding_rect[3]) * self.height_multiplier + self.line_extend
-        square_size = 10.0
+        x_init = self.position[0] + self.margin + self.width
+        y_init = self.position[1] + self.margin
+        square_size = 20
+        text_title = QGraphicsSimpleTextItem("clearance")
+        text_title.setPos(x_init, y_init - square_size)
+        self.addToGroup(text_title)
         for i in range(10):
-            x = x_init + i * square_size
-            y = y_init
+            x = x_init
+            y = y_init + 9 * square_size - i * square_size
             rect = QGraphicsRectItem(x, y, square_size, square_size)
             pen = QPen()
             pen.setWidth(0.01)
@@ -300,13 +368,18 @@ class ClearanceHeightGraph(BaseGraphic):
             rect.setBrush(brush)
             self.addToGroup(rect)
             if i == 0:
-                text_start = QGraphicsSimpleTextItem("%.2f" % float(self.vertical_clearance_min))
-                text_start.setPos(x, y + square_size)
+                text_start = QGraphicsSimpleTextItem("%.2f m" % float(self.vertical_clearance_min))
+                text_start.setPos(x + square_size + 5, y)
                 self.addToGroup(text_start)
             if i == 9:
-                text_end = QGraphicsSimpleTextItem("%.2f" % float(self.vertical_clearance_max))
-                text_end.setPos(x, y + square_size)
+                text_end = QGraphicsSimpleTextItem("%.2f m" % float(self.vertical_clearance_max))
+                text_end.setPos(x + square_size + 5, y)
                 self.addToGroup(text_end)
+            else:
+                value = self.vertical_clearance_min + (self.vertical_clearance_max-self.vertical_clearance_min) * i/9
+                text = QGraphicsSimpleTextItem("%.2f m" % value)
+                text.setPos(x + square_size + 5, y)
+                self.addToGroup(text)
 
 
 class LeftSurfaceGraph(BaseGraphic):
@@ -329,6 +402,7 @@ class LeftSurfaceGraph(BaseGraphic):
         self.create_axis()
         self.create_scale()
         self.add_surface_element()
+        self.create_legend()
 
     def create_axis(self):
         counter = len(self.surface[0]) - 1
@@ -366,9 +440,32 @@ class LeftSurfaceGraph(BaseGraphic):
             scale_text = QGraphicsSimpleTextItem("%.2f" % float(i))
             scale_text.setPos(x, y)
             self.addToGroup(scale_text)
+        start_to_zero = self.graph_zero[1] - self.position[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y - i * 25
+                text = QGraphicsSimpleTextItem("%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
+        start_to_zero = self.position[1] + self.height - self.graph_zero[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y + i * 25
+                text = QGraphicsSimpleTextItem("-%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
 
     def add_surface_element(self):
         element_wrapper_dict = self.parent.element_name_dict
+        element_item_dict = self.parent.element_list_item_dict
         x_init = self.graph_zero[0] + self.line_extend
         y_init = self.graph_zero[1] # + self.position[1] + self.margin from bottom of graph
         x_unit_distance = self.surface_analysis.section_distance * self.length_multiplier
@@ -377,12 +474,17 @@ class LeftSurfaceGraph(BaseGraphic):
             for j in range(len(self.surface[i])):
                 point_object = self.surface[i][j]
                 if point_object:
-                    element_name = point_object.element.name
+                    #element_name = point_object.element.name
+                    element = get_parent_element(point_object.element)
+                    element_name = element.name
                     element_wrapper = element_wrapper_dict.get(element_name)
                     material = point_object.material
+                    self.material_legend.add_to_dict(material)
                     scene_x = (point_object.point.Y() * self.length_multiplier + x_init) - x_unit_distance/2
                     scene_y = (- point_object.point.Z() * self.length_multiplier) + y_init - y_unit_distance/2
-                    rect = QGraphicsRectItem(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect = ElementRect(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect.set_element_name(element_name)
+                    rect.set_element_dict(element_wrapper_dict, element_item_dict)
                     pen = QPen()
                     pen.setStyle(Qt.NoPen)
                     rect.setPen(pen)
@@ -396,9 +498,9 @@ class LeftSurfaceGraph(BaseGraphic):
                     self.set_rect_fill(self.visualization_mode, rect, surface_color)
                     rect.setZValue(-1.0)
                     if element_wrapper:
-                        element_wrapper.add_graphic_item(rect)
+                        element_wrapper.is_analyzed = True
+                        element_wrapper.add_graphic_item(rect, material)
                     self.addToGroup(rect)
-
 
 
 class BottomSurfaceGraph(BaseGraphic):
@@ -421,6 +523,7 @@ class BottomSurfaceGraph(BaseGraphic):
         self.create_axis()
         self.create_scale()
         self.add_surface_element()
+        self.create_legend()
 
     def create_axis(self):
         counter = 0
@@ -457,9 +560,32 @@ class BottomSurfaceGraph(BaseGraphic):
             scale_text = QGraphicsSimpleTextItem("%.2f" % float(i))
             scale_text.setPos(x, y)
             self.addToGroup(scale_text)
+        start_to_zero = self.graph_zero[1] - self.position[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y - i * 25
+                text = QGraphicsSimpleTextItem("-%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
+        start_to_zero = self.position[1] + self.height - self.graph_zero[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y + i * 25
+                text = QGraphicsSimpleTextItem("%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
 
     def add_surface_element(self):
         element_wrapper_dict = self.parent.element_name_dict
+        element_item_dict = self.parent.element_list_item_dict
         x_init = self.graph_zero[0] + self.line_extend
         y_init = self.graph_zero[1]
         y_unit_distance = self.surface_analysis.sampling_distance * self.height_multiplier
@@ -468,12 +594,17 @@ class BottomSurfaceGraph(BaseGraphic):
             for j in range(len(self.surface[i])):
                 point_object = self.surface[i][j]
                 if point_object:
-                    element_name = point_object.element.name
+                    #element_name = point_object.element.name
+                    element = get_parent_element(point_object.element)
+                    element_name = element.name
                     element_wrapper = element_wrapper_dict.get(element_name)
                     material = point_object.material
+                    self.material_legend.add_to_dict(material)
                     scene_x = point_object.point.Y() * self.length_multiplier + x_init - x_unit_distance/2
                     scene_y = point_object.point.X() * self.height_multiplier + y_init - y_unit_distance/2
-                    rect = QGraphicsRectItem(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect = ElementRect(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect.set_element_name(element_name)
+                    rect.set_element_dict(element_wrapper_dict, element_item_dict)
                     pen = QPen()
                     pen.setStyle(Qt.NoPen)
                     rect.setPen(pen)
@@ -487,7 +618,8 @@ class BottomSurfaceGraph(BaseGraphic):
                     self.set_rect_fill(self.visualization_mode, rect, surface_color)
                     rect.setZValue(-1.0)
                     if element_wrapper:
-                        element_wrapper.add_graphic_item(rect)
+                        element_wrapper.is_analyzed = True
+                        element_wrapper.add_graphic_item(rect, material)
                     self.addToGroup(rect)
 
 
@@ -511,6 +643,7 @@ class RightSurfaceGraph(BaseGraphic):
         self.create_axis()
         self.create_scale()
         self.add_surface_element()
+        self.create_legend()
 
     def create_axis(self):
         counter = 0
@@ -547,9 +680,32 @@ class RightSurfaceGraph(BaseGraphic):
             scale_text = QGraphicsSimpleTextItem("%.2f" % float(i))
             scale_text.setPos(x, y)
             self.addToGroup(scale_text)
+        start_to_zero = self.graph_zero[1] - self.position[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y - i * 25
+                text = QGraphicsSimpleTextItem("-%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
+        start_to_zero = self.position[1] + self.height - self.graph_zero[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y + i * 25
+                text = QGraphicsSimpleTextItem("%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
 
     def add_surface_element(self):
         element_wrapper_dict = self.parent.element_name_dict
+        element_item_dict = self.parent.element_list_item_dict
         x_init = self.graph_zero[0] + self.line_extend
         y_init = self.graph_zero[1]
         x_unit_distance = self.surface_analysis.section_distance * self.length_multiplier
@@ -558,12 +714,17 @@ class RightSurfaceGraph(BaseGraphic):
             for j in range(len(self.surface[i])):
                 point_object = self.surface[i][j]
                 if point_object:
-                    element_name = point_object.element.name
+                    #element_name = point_object.element.name
+                    element = get_parent_element(point_object.element)
+                    element_name = element.name
                     element_wrapper = element_wrapper_dict.get(element_name)
                     material = point_object.material
+                    self.material_legend.add_to_dict(material)
                     scene_x = (point_object.point.Y() * self.length_multiplier + x_init) - x_unit_distance/2
                     scene_y = (point_object.point.Z() * self.length_multiplier + y_init) - y_unit_distance/2
-                    rect = QGraphicsRectItem(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect = ElementRect(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect.set_element_name(element_name)
+                    rect.set_element_dict(element_wrapper_dict, element_item_dict)
                     pen = QPen()
                     pen.setStyle(Qt.NoPen)
                     rect.setPen(pen)
@@ -577,8 +738,10 @@ class RightSurfaceGraph(BaseGraphic):
                     self.set_rect_fill(self.visualization_mode, rect, surface_color)
                     rect.setZValue(-1.0)
                     if element_wrapper:
-                        element_wrapper.add_graphic_item(rect)
+                        element_wrapper.add_graphic_item(rect, material)
+                        element_wrapper.is_analyzed = True
                     self.addToGroup(rect)
+
 
 class UpperSurfaceGraph(BaseGraphic):
     def __init__(self, *args):
@@ -600,6 +763,7 @@ class UpperSurfaceGraph(BaseGraphic):
         self.create_axis()
         self.create_scale()
         self.add_surface_element()
+        self.create_legend()
 
     def create_axis(self):
         counter = 0
@@ -636,9 +800,32 @@ class UpperSurfaceGraph(BaseGraphic):
             scale_text = QGraphicsSimpleTextItem("%.2f" % float(i))
             scale_text.setPos(x, y)
             self.addToGroup(scale_text)
+        start_to_zero = self.graph_zero[1] - self.position[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y - i * 25
+                text = QGraphicsSimpleTextItem("-%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
+        start_to_zero = self.position[1] + self.height - self.graph_zero[1]
+        step = abs(start_to_zero) // 25
+        x = self.graph_zero[0] - 15
+        y = self.graph_zero[1]
+        for i in range(int(step)-1):
+            if i > 0:
+                value = i * 25 / 100
+                scene_y = y + i * 25
+                text = QGraphicsSimpleTextItem("%.2f" % value)
+                text.setPos(x, scene_y)
+                self.addToGroup(text)
 
     def add_surface_element(self):
         element_wrapper_dict = self.parent.element_name_dict
+        element_item_dict = self.parent.element_list_item_dict
         x_init = self.graph_zero[0] + self.line_extend
         y_init = self.graph_zero[1]
         y_unit_distance = self.surface_analysis.sampling_distance * self.height_multiplier
@@ -647,12 +834,17 @@ class UpperSurfaceGraph(BaseGraphic):
             for j in range(len(self.surface[i])):
                 point_object = self.surface[i][j]
                 if point_object:
-                    element_name = point_object.element.name
+                    #element_name = point_object.element.name
+                    element = get_parent_element(point_object.element)
+                    element_name = element.name
                     element_wrapper = element_wrapper_dict.get(element_name)
                     material = point_object.material
+                    self.material_legend.add_to_dict(material)
                     scene_x = point_object.point.Y() * self.length_multiplier + x_init - x_unit_distance/2
                     scene_y = point_object.point.X() * self.height_multiplier + y_init - y_unit_distance/2
-                    rect = QGraphicsRectItem(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect = ElementRect(scene_x, scene_y, x_unit_distance, y_unit_distance)
+                    rect.set_element_name(element_name)
+                    rect.set_element_dict(element_wrapper_dict, element_item_dict)
                     pen = QPen()
                     pen.setStyle(Qt.NoPen)
                     rect.setPen(pen)
@@ -666,10 +858,76 @@ class UpperSurfaceGraph(BaseGraphic):
                     self.set_rect_fill(self.visualization_mode, rect, surface_color)
                     rect.setZValue(-1.0)
                     if element_wrapper:
-                        element_wrapper.add_graphic_item(rect)
+                        element_wrapper.add_graphic_item(rect, material)
+                        element_wrapper.is_analyzed = True
                     self.addToGroup(rect)
 
 
+class ElementRect(QGraphicsRectItem):
+    def __init__(self, *args):
+        super(ElementRect, self).__init__(*args)
+        self.element_name = None
+        self.element_wrapper_dict = None
+        self.element_list_item_dict = None
 
+    def set_element_name(self, element_name):
+        self.element_name = element_name
+
+    def set_element_dict(self, element_wrapper_dict, element_item_dict):
+        self.element_wrapper_dict = element_wrapper_dict
+        self.element_list_item_dict = element_item_dict
+
+    def mousePressEvent(self, *args, **kwargs):
+        if self.element_name:
+            print(self.element_name)
+            element_wrapper = self.element_wrapper_dict.get(self.element_name)
+            if element_wrapper:
+                is_select = not element_wrapper.is_selected
+                element_wrapper.set_selected(is_select)
+                item = self.element_list_item_dict[self.element_name]
+                if item:
+                    if is_select: #true
+                        item.setSelected(True)
+                    else:
+                        item.setSelected(False)
+
+
+class MaterialLegend(object):
+    def __init__(self, *args):
+        self.parent = args[0]
+        self.position = None
+        self.material_dict = {}
+        self.visualization_mode = 0
+        self.graphic_items = []
+        self.top_margin =  self.parent.margin
+        self.left_margin = self.parent.margin
+        self.element_select = {}
+
+    def add_to_dict(self, material):
+        if material.name:
+            if not (material.name in self.material_dict):
+                self.material_dict[material.name] = material
+
+    def create_material_legend(self, *args):
+        self.position = args[0], args[1]
+        square_size = 20
+        material_list_key = sorted(self.material_dict)
+        x_init = self.position[0] + self.left_margin
+        y_init = self.position[1] + self.top_margin
+        i = 0
+        for key in material_list_key:
+            scene_y = y_init + i * (square_size + 5)
+            material = self.material_dict[key]
+            surface_colour = material.get_surface_colour()
+            rect = QGraphicsRectItem(x_init, scene_y, square_size, square_size)
+            pen = QPen()
+            pen.setWidthF(0.5)
+            rect.setPen(pen)
+            BaseGraphic.set_rect_fill(self.visualization_mode, rect, surface_colour)
+            self.graphic_items.append(rect)
+            text = QGraphicsSimpleTextItem(key)
+            text.setPos(x_init + square_size + 5, scene_y)
+            self.graphic_items.append(text)
+            i += 1
 
 

@@ -4,6 +4,9 @@ from section_visualization_ui import Ui_section_visualization_gui
 from PyQt5 import QtGui, QtCore, QtWidgets
 from analysis_visualization_gui import GuiAnalysisVisualization
 from section_visualization_widget import SectionVisualizationWidget
+from tkinter import Tk
+import tkinter.filedialog
+from os.path import isfile
 
 class GuiVisualization(QtWidgets.QMainWindow):
     def __init__(self, *args):
@@ -47,7 +50,7 @@ class GuiVisualization(QtWidgets.QMainWindow):
     def setup_toolbar(self):
         self.add_toolbar("Main Toolbar")
         self.add_toolbar("View Toolbar")
-        self.add_function_to_toolbar("Main Toolbar", self.export_svg)
+        self.add_function_to_toolbar("Main Toolbar", self.export_image)
         self.add_function_to_toolbar("Main Toolbar", self.analyze_dimension)
         self.add_function_to_toolbar("Main Toolbar", self.analyze_surface)
         self.add_function_to_toolbar("Main Toolbar", self.analyze_clearance)
@@ -57,9 +60,10 @@ class GuiVisualization(QtWidgets.QMainWindow):
         self.add_function_to_toolbar("View Toolbar", self.iso_view)
         pass
 
-    def export_svg(self):
-        # f = self.canvas.get_display().View.View().GetObject()
+    def export_image(self):
+        f = self.canvas.get_display().View.View().GetObject()
         # print f.Export("tetesdrf.svg", Graphic3d_EF_SVG)
+        print(self.canvas.get_display().View.Dump("0001_export_slices.png"))
         pass
 
     def get_init_section(self):

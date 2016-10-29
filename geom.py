@@ -130,3 +130,9 @@ def divide_curve(crv, distance):
         if param <= 1:
             curve_param.append(param)
     return curve_param
+
+
+def curve_length(crv, param1, param2):
+    geom_adaptor_curve = GeomAdaptor_Curve(crv.GetHandle())
+    length = GCPnts_AbscissaPoint.Length(geom_adaptor_curve, param1, param2)
+    return length

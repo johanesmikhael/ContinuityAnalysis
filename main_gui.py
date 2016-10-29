@@ -9,7 +9,7 @@ from ifcopenshell.geom import occ_utils
 
 # from OCC.Utils import Topo
 from OCC import V3d
-from OCC.gp import gp_Pln, gp_Dir
+from OCC.gp import gp_Pln, gp_Dir, gp_Vec
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
 from OCC.TopTools import TopTools_ListIteratorOfListOfShape
 from OCC.TopTools import TopTools_HSequenceOfShape
@@ -72,7 +72,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.section_visualization_win = None
         self.material_browser_win = None
 
-        self.section_distance = 0.5
+        self.section_distance = 0.25
         self.path_elevation = 1.2
         self.section_plane_size = 5.0
         self.max_height_clearance = 2.0
@@ -84,6 +84,10 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.is_show_plane = False
 
         self.filename = None
+
+        self.p_distance_pointer = 0.0
+        self.previous_point = None
+        self.pointer_edge = None
 
     # noinspection PyBroadException
     def setup_ifcopenshell_viewer(self, _app):
@@ -153,6 +157,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
 
     def setup_toolbar(self):
         self.add_toolbar("Main Toolbar")
+        self.add_function_to_toolbar("Main Toolbar", self.export_image)
         self.add_function_to_toolbar("Main Toolbar", self.open_file)
         self.add_function_to_toolbar("Main Toolbar", self.material_browser)
         self.add_function_to_toolbar("Main Toolbar", self.draw_path)
@@ -190,74 +195,83 @@ class GuiMainWindow(QtWidgets.QMainWindow):
             print("No file opened")
         self.display_elements()
 
+    def export_image(self):
+        f = self.canvas.get_display().View.View().GetObject()
+        # print f.Export("tetesdrf.svg", Graphic3d_EF_SVG)
+        root = Tk()
+        root.withdraw()
+        root.destroy()
+        print(self.canvas.get_display().View.Dump("0000_export_main.png"))
+        pass
+
     def process_file(self):
         elements = self.ifc_file.by_type("IfcElement")
         for element in elements:
             is_decompose = BuildingElement.check_ifc_is_decompose(element)
             if not is_decompose:
                 if element.is_a("IfcSlab"):
-                    slab = element_select.create(self, element)
+                    slab = element_select.create(self, element, None)
                     self.elements.append(slab)
                     pass
                 if element.is_a("IfcWall"):
-                    wall = element_select.create(self, element)
+                    wall = element_select.create(self, element, None)
                     self.elements.append(wall)
                     pass
                 if element.is_a("IfcColumn"):
-                    column = element_select.create(self, element)
+                    column = element_select.create(self, element, None)
                     self.elements.append(column)
                     pass
                 if element.is_a("IfcBeam"):
-                    beam = element_select.create(self, element)
+                    beam = element_select.create(self, element, None)
                     self.elements.append(beam)
                     pass
                 if element.is_a("IfcCovering"):
-                    covering = element_select.create(self, element)
+                    covering = element_select.create(self, element, None)
                     self.elements.append(covering)
                     pass
                 if element.is_a("IfcCurtainWall"):
-                    curtain_wall = element_select.create(self, element)
+                    curtain_wall = element_select.create(self, element, None)
                     self.elements.append(curtain_wall)
                     pass
                 if element.is_a("IfcDoor"):
-                    door = element_select.create(self, element)
+                    door = element_select.create(self, element, None)
                     self.elements.append(door)
                     pass
                 if element.is_a("IfcWindow"):
-                    window = element_select.create(self, element)
+                    window = element_select.create(self, element, None)
                     self.elements.append(window)
                     pass
                 if element.is_a("IfcRailing"):
-                    railing = element_select.create(self, element)
+                    railing = element_select.create(self, element, None)
                     self.elements.append(railing)
                     pass
                 if element.is_a("IfcStair"):
-                    stair = element_select.create(self, element)
+                    stair = element_select.create(self, element, None)
                     self.elements.append(stair)
                     pass
                 if element.is_a("IfcRamp"):
                     print("RAMP IS NOT IMPLEMENTED YET")
                     pass
                 if element.is_a("IfcRoof"):
-                    roof = element_select.create(self, element)
+                    roof = element_select.create(self, element, None)
                     self.elements.append(roof)
                     pass
                 if element.is_a("IfcFurnishingElement"):
-                    furniture = element_select.create(self, element)
+                    furniture = element_select.create(self, element, None)
                     self.elements.append(furniture)
                     pass
                 if element.is_a("IfcFlowTerminal"):
-                    flow_terminal = element_select.create(self, element)
+                    flow_terminal = element_select.create(self, element, None)
                     self.elements.append(flow_terminal)
                     pass
                 if element.is_a("IfcBuildingElementProxy"):
-                    building_element_proxy = element_select.create(self, element)
+                    building_element_proxy = element_select.create(self, element, None)
                     self.elements.append(building_element_proxy)
                     pass
         spatial_structure_elements = self.ifc_file.by_type("IfcSpatialStructureElement")
         for spatial_structure_element in spatial_structure_elements:
             if spatial_structure_element.is_a("IfcSite"):
-                site = Site(self, spatial_structure_element)
+                site = Site(self, spatial_structure_element, None)
                 print(site)
                 print(site.main_topods_shape)
                 self.elements.append(site)
@@ -322,6 +336,8 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.material_dict = MaterialDict()
 
     def process_section(self):
+        if self.section_list:
+            return
         self.is_show_section = True
         self.clear_section()
         if sys.version_info[:3] >= (2, 6, 0):
@@ -448,6 +464,44 @@ class GuiMainWindow(QtWidgets.QMainWindow):
             self.material_browser_win.hide()
         else:
             self.material_browser_win.show()
+        pass
+
+    def set_distance_pointer(self, pointer_distance):
+        if self.p_distance_pointer != pointer_distance:
+            display = self.canvas.get_display()
+            curve = self.canvas.get_path_curve()[0]
+            first_param = curve.FirstParameter()
+            end_param = curve.LastParameter()
+            length = curve_length(curve, first_param, end_param)
+            if pointer_distance > length:
+                pointer_distance = length
+            param = first_param + (end_param-first_param) * pointer_distance / length
+            pt = curve.Value(param)
+            if self.pointer_edge:
+                display.Context.Remove(self.pointer_edge[2])
+                #just move it
+                self.pointer_edge[0].Translate(self.previous_point, pt)
+                self.pointer_edge[1].Translate(self.previous_point, pt)
+                edge = create_edge_from_two_point(self.pointer_edge[0], self.pointer_edge[1])
+                self.pointer_edge[2] = display.DisplayShape(edge)
+                self.previous_point = pt
+            else:
+                pt_vec = curve.DN(param, 1)
+                pt_vec.Normalize()
+                axis = gp_Ax1()
+                axis.SetLocation(pt)
+                rotated_ved = pt_vec.Rotated(axis,pi/2)
+                cross_vec = pt_vec.Crossed(rotated_ved)
+                cross_vec.Scale(self.section_plane_size * 1.5)
+                reserved_vec = cross_vec.Reversed()
+                pt_start = pt.Translated(reserved_vec)
+                pt_end = pt.Translated(cross_vec)
+                edge = create_edge_from_two_point(pt_start, pt_end)
+                edge_ais = display.DisplayShape(edge)
+                self.pointer_edge = [pt_start, pt_end, edge_ais]
+                self.previous_point = pt
+            self.p_distance_pointer = pointer_distance
+            display.Repaint()
         pass
 
 
