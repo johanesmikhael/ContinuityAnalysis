@@ -30,3 +30,5 @@ class Ui_main_gui(object):
         _translate = QtCore.QCoreApplication.translate
         main_gui.setWindowTitle(_translate("main_gui", "MainWindow"))
 
+
+

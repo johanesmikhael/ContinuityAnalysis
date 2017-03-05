@@ -43,6 +43,8 @@ class GuiAnalysisVisualization(QtWidgets.QMainWindow):
         self.set_distance_slider()
         self.graphic_view = AnalysisViewWidget(self)
         self.scene = QGraphicsScene()
+        brush = QBrush(QColor(255, 255, 255))
+        self.scene.setBackgroundBrush(brush)
         self.graphic_view.setScene(self.scene)
         self.ui.verticalLayout.addWidget(self.graphic_view)
         self.ui.verticalSlider_distance.valueChanged.connect(self.set_distance_value)

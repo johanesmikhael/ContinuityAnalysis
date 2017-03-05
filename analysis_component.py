@@ -235,8 +235,9 @@ class ClearanceWidthGraph(BaseGraphic):
         y = self.distance_pointer.line().y1() + (self.distance_pointer.line().y2() - self.distance_pointer.line().y1())/8
         self.clearance_label.setPos(x, y)
         if clearance:
-            distance = clearance[1] - clearance[0]
-            self.clearance_label.setText("clearance = %.2f" % distance)
+            if clearance[1] and clearance[0]:
+                distance = clearance[1] - clearance[0]
+                self.clearance_label.setText("clearance = %.2f" % distance)
 
 
 class ClearanceHeightGraph(BaseGraphic):

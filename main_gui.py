@@ -41,6 +41,7 @@ from tkinter import Tk
 import tkinter.filedialog
 from os.path import isfile
 
+
 class GuiMainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args):
         QtWidgets.QMainWindow.__init__(self, *args)
@@ -72,11 +73,11 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.section_visualization_win = None
         self.material_browser_win = None
 
-        self.section_distance = 0.25
+        self.section_distance = 0.05
         self.path_elevation = 1.2
         self.section_plane_size = 5.0
         self.max_height_clearance = 2.0
-        self.min_horizontal_clearance = 2.4
+        self.min_horizontal_clearance = 2.15
 
         self.viewer_bg_color = Color.white
 

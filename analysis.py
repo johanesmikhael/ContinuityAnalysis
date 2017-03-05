@@ -314,17 +314,18 @@ class ClearanceAnalysis(object):
             for k in range(len(bottom_section)):
                 left_point = None
                 right_point = None
-                if k < len(left_section):
-                    left_point = left_section[k]
-                if k < len(right_section):
-                    right_point = right_section[k]
-                if left_point:
-                    if left_point.point.Z() <= clearance_limit:
-                        if not max_left or max_left < left_point.point.X():
-                            max_left = left_point.point.X()
-                if right_point:
-                    if right_point.point.Z() <= clearance_limit:
-                        if not min_right or min_right > right_point.point.X():
-                            min_right = right_point.point.X()
+                if k > 0: # obey first point often hit undesired object
+                    if k < len(left_section):
+                        left_point = left_section[k]
+                    if k < len(right_section):
+                        right_point = right_section[k]
+                    if left_point:
+                        if left_point.point.Z() <= clearance_limit:
+                            if not max_left or max_left < left_point.point.X():
+                                max_left = left_point.point.X()
+                    if right_point:
+                        if right_point.point.Z() <= clearance_limit:
+                            if not min_right or min_right > right_point.point.X():
+                                min_right = right_point.point.X()
             self.horizontal_clearance.append((max_left, min_right))
 

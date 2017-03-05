@@ -130,7 +130,7 @@ class SectionAnalyzer(object):
             self.surface_analysis = SurfaceAnalysis(self)
             self.surface_analysis.perform(0.05)
             print("SURFACE ANALYSIS DONE")
-            #self.display_surface_analysis(True)
+            # self.display_surface_analysis(True)
 
     def display_surface_analysis(self, is_show_analysis):
         display = self._visualizer.canvas.get_display()
