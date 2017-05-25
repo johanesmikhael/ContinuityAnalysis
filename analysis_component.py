@@ -7,7 +7,6 @@ from util import Math
 from util import Color, ColorInterpolation
 from ifcproducts import get_parent_element
 
-
 class BaseGraphic(object):
     def __init__(self, *args):
         super(BaseGraphic, self).__init__()
