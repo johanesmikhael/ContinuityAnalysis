@@ -33,7 +33,7 @@ class Ui_analysis_visualization_gui(object):
         self.verticalLayout.setObjectName("verticalLayout")
         self.gridLayout.addLayout(self.verticalLayout, 1, 0, 1, 1)
         self.listWidget_elements = QtWidgets.QListWidget(self.centralwidget)
-        self.listWidget_elements.setMaximumSize(QtCore.QSize(250, 16777215))
+        self.listWidget_elements.setMaximumSize(QtCore.QSize(750, 16777215))
         self.listWidget_elements.setSelectionMode(QtWidgets.QAbstractItemView.MultiSelection)
         self.listWidget_elements.setObjectName("listWidget_elements")
         self.gridLayout.addWidget(self.listWidget_elements, 1, 2, 1, 1)

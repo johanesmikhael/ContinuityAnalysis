@@ -145,7 +145,7 @@ element_select.add_function_to_dict("IfcBuildingElementProxy", create_building_e
 
 
 def get_parent_element(element):
-    print(element)
+    #print(element)
     _element = element
     parent_element = element.parent_elem
     while parent_element is not None:
@@ -213,6 +213,32 @@ class BuildingElement(object):
             ais.SetColor(ais_color)
             shape["ais"] = ais
 
+    def set_visible(self, display, is_visible):
+        if len(self.children) > 0:
+            for child in self.children:
+                child.set_visible(display, is_visible)
+        if len(self.topods_shapes) > 0:
+            self.set_visible_topods_shapes(display, is_visible)
+        elif self.main_topods_shape:
+            if is_visible:
+                pass
+                display.Context.Display(self.main_ais.GetHandle())
+            else:
+                pass
+                display.Context.Erase(self.main_ais.GetHandle())
+
+
+    def set_visible_topods_shapes(self, display, is_visible):
+        for shape in self.topods_shapes:
+            if is_visible:
+                pass
+                display.Context.Display(shape["ais"].GetHandle())
+            else:
+                print(shape["ais"])
+                print(display)
+                if shape["ais"]:
+                    display.Context.Erase(shape["ais"].GetHandle())
+
     def get_material_layers(self):
         material_layers = []
         if self.material_information:
@@ -240,6 +266,7 @@ class BuildingElement(object):
             self.break_decomposed_geometry()
 
     def break_non_decomposed_geometry(self):
+        print(self.is_decomposed)
         ifc_product_representation = self.ifc_instance.Representation
         ifc_representations = ifc_product_representation.Representations
         material_list = []
@@ -435,6 +462,7 @@ class Wall(BuildingElement):
             exp.Next()
             face_dict = dict()
             if orientation == OCC.TopAbs.TopAbs_REVERSED:
+                pass
                 surface_normal.Reverse()
             if self.ref_rotation != 0.0:
                 rotation_axis = OCC.gp.gp_Ax1()
@@ -606,7 +634,6 @@ class Site(BuildingElement):
             for ifc_representation in representation.Representations:
                 if ifc_representation.RepresentationIdentifier == "Body":
                     representation_items = ifc_representation.Items
-                    print(representation_items)
                     for representation_item in representation_items:
                         fsbm_faces = representation_item.FbsmFaces
                         if representation_item.StyledByItem:
@@ -622,7 +649,6 @@ class Site(BuildingElement):
                             for fsbm_face in fsbm_faces:
                                 material_list.append(None)
             shape_iterator = OCC.TopoDS.TopoDS_Iterator(self.main_topods_shape)
-            print(len(material_list))
             j = 0
             while shape_iterator.More():
                 topods_shape = shape_iterator.Value()

@@ -2,7 +2,6 @@ import sys
 
 from continuity_analyzer_ui import Ui_main_gui
 from PyQt5 import QtGui, QtCore, QtWidgets
-
 from ifc_viewer_widget import IfcViewerWidget
 
 from ifcopenshell.geom import occ_utils
@@ -11,6 +10,7 @@ from ifcopenshell.geom import occ_utils
 from OCC import V3d
 from OCC.gp import gp_Pln, gp_Dir, gp_Vec
 from OCC.BRepBuilderAPI import BRepBuilderAPI_MakeFace
+from OCC.BRepPrimAPI import BRepPrimAPI_MakePrism
 from OCC.TopTools import TopTools_ListIteratorOfListOfShape
 from OCC.TopTools import TopTools_HSequenceOfShape
 from OCC.TopTools import Handle_TopTools_HSequenceOfShape
@@ -27,9 +27,13 @@ from ifcmaterials import *
 
 from section_visualization_gui import *
 
+from slice_visualization_gui import *
+
 from material_browser_gui import *
 
 from section_elements import *
+
+from slice_elements import *
 
 from util import Color
 
@@ -48,7 +52,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.ui = Ui_main_gui()
         self.ui.setupUi(self)
         self.setWindowTitle("Main GUI")
-        self.resize(1024, 640)
+        self.resize(2048, 1280)
         self.canvas = IfcViewerWidget(self)
         self.setCentralWidget(self.canvas)
         if not sys.platform == "darwin":
@@ -66,16 +70,19 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         self.ifc_file = None
         self.section_planes = []
         self.section_list = []
+        self.section_boxes = []
+        self.slice_list = []
         self.path_mark_edges = []
         self.elements = []
         self.material_dict = MaterialDict()
 
         self.section_visualization_win = None
+        self.slice_visualization_win = None
         self.material_browser_win = None
 
-        self.section_distance = 0.05
-        self.path_elevation = 1.2
-        self.section_plane_size = 5.0
+        self.section_distance = 0.2
+        self.path_elevation = 1.5
+        self.section_plane_size = 2.0
         self.max_height_clearance = 2.0
         self.min_horizontal_clearance = 2.15
 
@@ -83,6 +90,9 @@ class GuiMainWindow(QtWidgets.QMainWindow):
 
         self.is_show_section = False
         self.is_show_plane = False
+        self.is_show_slice = False
+        self.is_show_boxes = False
+        self.is_show_model = False
 
         self.filename = None
 
@@ -158,18 +168,27 @@ class GuiMainWindow(QtWidgets.QMainWindow):
 
     def setup_toolbar(self):
         self.add_toolbar("Main Toolbar")
+        self.addToolBarBreak()
+        self.add_toolbar("Section Analysis")
+        self.addToolBarBreak()
+        self.add_toolbar("Slices Analysis")
         self.add_function_to_toolbar("Main Toolbar", self.export_image)
         self.add_function_to_toolbar("Main Toolbar", self.open_file)
         self.add_function_to_toolbar("Main Toolbar", self.material_browser)
         self.add_function_to_toolbar("Main Toolbar", self.draw_path)
-        self.add_function_to_toolbar("Main Toolbar", self.generate_section_plane)
-        self.add_function_to_toolbar("Main Toolbar", self.toggle_plane_view)
-        self.add_function_to_toolbar("Main Toolbar", self.process_section)
-        self.add_function_to_toolbar("Main Toolbar", self.toggle_section_view)
-        self.add_function_to_toolbar("Main Toolbar", self.analyze_section)
+        self.add_function_to_toolbar("Section Analysis", self.generate_section_plane)
+        self.add_function_to_toolbar("Section Analysis", self.toggle_plane_view)
+        self.add_function_to_toolbar("Section Analysis", self.process_section)
+        self.add_function_to_toolbar("Section Analysis", self.toggle_section_view)
+        self.add_function_to_toolbar("Section Analysis", self.analyze_section)
         self.add_function_to_toolbar("Main Toolbar", self.top_view)
         self.add_function_to_toolbar("Main Toolbar", self.iso_view)
-
+        self.add_function_to_toolbar("Slices Analysis", self.generate_slice_box)
+        self.add_function_to_toolbar("Slices Analysis", self.toggle_boxes_view)
+        self.add_function_to_toolbar("Slices Analysis", self.process_slice)
+        self.add_function_to_toolbar("Slices Analysis", self.toggle_slice_view)
+        self.add_function_to_toolbar("Slices Analysis", self.analyze_slice)
+        self.add_function_to_toolbar("Main Toolbar", self.toggle_model_view)
 
     def draw_path(self):
         if self.ifc_file is None:
@@ -194,6 +213,7 @@ class GuiMainWindow(QtWidgets.QMainWindow):
             # self.display_ifc_file()
         else:
             print("No file opened")
+        self.is_show_model = True
         self.display_elements()
 
     def export_image(self):
@@ -202,7 +222,10 @@ class GuiMainWindow(QtWidgets.QMainWindow):
         root = Tk()
         root.withdraw()
         root.destroy()
-        print(self.canvas.get_display().View.Dump("0000_export_main.png"))
+        import datetime
+        now = datetime.datetime.now()
+        now_str = now.strftime("%Y-%m-%d_%H%M%S")
+        print(self.canvas.get_display().View.Dump(now_str+"_export_main.png"))
         pass
 
     def process_file(self):
@@ -309,14 +332,45 @@ class GuiMainWindow(QtWidgets.QMainWindow):
                 pt_sec_plane = gp_Pln(pt, gp_Dir(pt_vec))
                 size = self.section_plane_size
                 section_face = BRepBuilderAPI_MakeFace(pt_sec_plane, -size, size, -size, size).Face()
+                print(section_face)
                 section_face_display = display.DisplayShape(section_face, transparency=0.99, color=255)
+                print(section_face_display)
                 bounding_box = Bnd_Box()
                 brepbndlib_Add(section_face, bounding_box)
-                self.section_planes.append((i, section_face, section_face_display, pt_sec_plane, bounding_box))
+                self.section_planes.append((i, section_face, section_face_display, pt_sec_plane, bounding_box, pt_vec))
             display.Repaint()
             return True
         else:
             return False
+
+    def generate_slice_box(self):
+        slice_box_success = self.create_slice_box()
+        if not slice_box_success:
+            print("no section plantes to start with")
+
+    def create_slice_box(self):
+        if len(self.section_planes) > 0:
+            self.is_show_boxes = True
+            i = 0
+            display = self.canvas.get_display()
+            for plane in self.section_planes:
+                vector = plane[5].Normalized().Scaled(self.section_distance)
+                section_slice = BRepPrimAPI_MakePrism(plane[1], vector).Shape()
+                print(section_slice)
+                section_slice_display = display.DisplayShape(section_slice, transparency=0.95, color=100)
+                bounding_box = Bnd_Box()
+                brepbndlib_Add(section_slice, bounding_box)
+                self.section_boxes.append((i, section_slice, section_slice_display, plane[3], bounding_box))
+                i += 1
+            return True
+        else:
+            return False
+
+    def generate_plan(self):
+        section_plan_success = self.create_plan(self.path_elevation)
+
+    def create_plan(self, plan_elevation):
+        pass
 
     def clear_crv_sections(self):
         display = self.canvas.get_display()
@@ -390,8 +444,65 @@ class GuiMainWindow(QtWidgets.QMainWindow):
             self.section_visualization_win.show()
         pass
 
+    def process_slice(self):
+        if self.slice_list:
+            return
+        self.is_show_slice = True
+        self.clear_slice()
+        self.slice_list = self.create_slice(self.section_boxes, self.elements)
+        display = self.canvas.get_display()
+        for slice in self.slice_list:
+            pass
+            #slice.display_shape(display)
+        display.Repaint()
+        pass
+
+    def clear_slice(self):
+        display = self.canvas.get_display()
+        if self.slice_list:
+            for slice in self.slice_list:
+                slice.clear_display(display)
+        self.section_list = []
+
+    @staticmethod
+    def create_slice(section_boxes, elements):
+        slice_list = []
+        i = 0
+        for section_box in section_boxes:
+            print(i)
+            slice = Slice()
+            for element in elements:
+                element_slice = ElementSlice.create_element_slice(section_box, element)
+                if element_slice:
+                    slice.add_element_slice(element_slice)
+            slice_list.append(slice)
+            i += 1
+        return slice_list
+        pass
+
+    def analyze_slice(self):
+        if not self.slice_list:
+            print("no slice to analyze")
+            return
+        if not self.slice_visualization_win:
+            self.slice_visualization_win = GuiVisualization(self)
+            self.slice_visualization_win.canvas.InitDriver()
+            self.slice_visualization_win.get_init_slice()
+        if self.slice_visualization_win.isVisible():
+            self.slice_visualization_win.hide()
+        else:
+            self.slice_visualization_win.show()
+        pass
+
     def get_material_dict(self):
         return self.material_dict
+
+    def toggle_model_view(self):
+        self.is_show_model = not self.is_show_model
+        display = self.canvas.get_display()
+        for element in self.elements:
+            pass
+            element.set_visible(display, self.is_show_model)
 
     def toggle_section_view(self):
         self.is_show_section = not self.is_show_section
@@ -407,6 +518,21 @@ class GuiMainWindow(QtWidgets.QMainWindow):
                 display.Context.Display(plane[2])
             else:
                 display.Context.Erase(plane[2])
+
+    def toggle_slice_view(self):
+        self.is_show_slice = not self.is_show_slice
+        display = self.canvas.get_display()
+        for slice in self.slice_list:
+            slice.set_visible(display, self.is_show_slice)
+
+    def toggle_boxes_view(self):
+        display = self.canvas.get_display()
+        self.is_show_boxes = not self.is_show_boxes
+        for box in self.section_boxes:
+            if self.is_show_boxes:
+                display.Context.Display(box[2])
+            else:
+                display.Context.Erase(box[2])
 
     def create_path_annotation(self):
         self.remove_path_marks()

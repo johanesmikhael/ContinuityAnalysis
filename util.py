@@ -4,8 +4,9 @@ from math import fabs
 from xml.etree import ElementTree
 from xml.dom import minidom
 
-from PyQt5.QtGui import  QColor
+from PyQt5.QtGui import QColor
 from colorsys import *
+
 
 def prettify(elem):
     """Return a pretty-printed XML string for the Element.
@@ -28,6 +29,7 @@ def get_int_from_xml(node):
     float_value = get_float_from_xml(node)
     return int(float_value)
 
+
 class Color:
     def __init__(self):
         pass
@@ -35,7 +37,7 @@ class Color:
     white = 255, 255, 255
     gray = 127, 127, 127
     green = 0, 240, 0
-    red = 240,0, 0
+    red = 240, 0, 0
     dark_gray = 32, 32, 32
     dark_green = 0, 128, 0
     dark_red = 128, 0, 0
@@ -47,33 +49,45 @@ class Color:
 
     @staticmethod
     def from_factor_to_rgb(r_factor, g_factor, b_factor):
-        r = int(r_factor*255)
-        g = int(g_factor*255)
-        b = int(b_factor*255)
-        return r,g,b
+        r = int(r_factor * 255)
+        g = int(g_factor * 255)
+        b = int(b_factor * 255)
+        return r, g, b
 
     @staticmethod
     def from_rgb_to_factor(r, g, b):
-        r_factor = float(r)/255
-        g_factor = float(g)/255
-        b_factor = float(b)/255
+        r_factor = float(r) / 255
+        g_factor = float(g) / 255
+        b_factor = float(b) / 255
         return r_factor, g_factor, b_factor
 
     @staticmethod
     def create_qcolor_from_rgb_tuple(rgb_tuple):
         color = QColor(rgb_tuple[0], rgb_tuple[1], rgb_tuple[2])
         return color
+
     @staticmethod
     def create_qcolor_from_rgb_tuple_f(rgb):
-        rgb_tuple = Color.from_factor_to_rgb(rgb[0],rgb[1], rgb[2])
+        rgb_tuple = Color.from_factor_to_rgb(rgb[0], rgb[1], rgb[2])
         color = Color.create_qcolor_from_rgb_tuple(rgb_tuple)
         return color
+
+    @staticmethod
+    def colour_distance(rgb_tuple1, rgb_tuple2):
+        print("start calc distance")
+        print(rgb_tuple1)
+        print(rgb_tuple2)
+        squared_distance = (rgb_tuple2[0] - rgb_tuple1[0]) ** 2 + \
+                           (rgb_tuple2[1] - rgb_tuple1[1]) ** 2 + \
+                           (rgb_tuple2[2] - rgb_tuple1[2]) ** 2
+        print(squared_distance)
+        return pow(squared_distance, 0.5)
 
 
 class ColorInterpolation(object):
     def __init__(self, *args):
-        self.start_color = args[0] #qcolor
-        self.end_color = args[1] #qcolor
+        self.start_color = args[0]  # qcolor
+        self.end_color = args[1]  # qcolor
         self.min_value = args[2]
         self.max_value = args[3]
         self.hsv_start = self.get_hsv_from_qcolor(self.start_color)
@@ -92,14 +106,14 @@ class ColorInterpolation(object):
             return self.start_color
         elif value >= self.max_value:
             return self.end_color
-        else: # the value is in beetween the value comain
+        else:  # the value is in beetween the value comain
             min_hue = self.hsv_start[0]
             max_hue = self.hsv_end[0]
             min_saturation = self.hsv_start[1]
             max_saturation = self.hsv_end[1]
             min_value = self.hsv_start[2]
             max_value = self.hsv_end[2]
-            fraction = (value - self.min_value)/(self.max_value-self.min_value)
+            fraction = (value - self.min_value) / (self.max_value - self.min_value)
             hue = fraction * (max_hue - min_hue) + min_hue
             saturation = fraction * (max_saturation - min_saturation) + min_saturation
             value = fraction * (max_value - min_value) + min_value
@@ -123,6 +137,7 @@ class ColorInterpolation(object):
 class Orientation:
     def __init__(self):
         pass
+
     bottom = 0
     up = 1
     left = 2
@@ -151,7 +166,7 @@ class Math:
             results = value // divider
             return results
         else:
-            results = value/fabs(value) * (fabs(value)//divider)
+            results = value / fabs(value) * (fabs(value) // divider)
             return results
 
     @staticmethod
@@ -161,7 +176,7 @@ class Math:
         print(start)
         print(stop)
         print(step)
-        while r < stop-step:
+        while r < stop - step:
             float_list.append(r)
             r += step
         return float_list

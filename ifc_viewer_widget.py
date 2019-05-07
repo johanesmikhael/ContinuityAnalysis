@@ -1,7 +1,6 @@
 import math
 from OCC.Display.backend import load_backend
 from OCC.gp import gp_Pnt
-
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtGui import QOpenGLContext
 from PyQt5.QtCore import QPointF
@@ -60,8 +59,8 @@ class IfcViewerWidget(qtViewer3d):
                 # self._preview_curve[0] = points_to_bezier_curve(temp_pts)
                 self._preview_curve[0] = points_to_bspline_curve(temp_pts, 3)
                 if self._preview_curve[1] is not None:
-                    # print(self._preview_curve[1])
-                    self._display.Context.ClearPrs(self._preview_curve[1])
+                    print(self._preview_curve[1])
+                    self._display.Context.Remove(self._preview_curve[1])
                 self._preview_curve[1] = self._display.DisplayShape(self._preview_curve[0])
             self._display.Repaint()
 

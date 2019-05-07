@@ -115,7 +115,9 @@ class qtViewer3d(qtBaseViewer):
                          ord('B'): self._display.DisableAntiAliasing,
                          ord('H'): self._display.SetModeHLR,
                          ord('F'): self._display.FitAll,
-                         ord('G'): self._display.SetSelectionMode}
+                         ord('G'): self._display.SetSelectionMode,
+                         ord('P'): self._display.SetPerspectiveProjection,
+                         ord('O'): self._display.SetOrthographicProjection}
 
     def keyPressEvent(self, event):
         code = event.key()
