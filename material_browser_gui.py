@@ -11,6 +11,7 @@ from util import Color, prettify, get_float_from_xml, get_text_from_xml, get_int
 
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 from xml.dom.minidom import Document, parse, parseString
+from util import *
 
 
 class GuiMaterialBrowser(QtWidgets.QWidget):
@@ -83,7 +84,8 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         new_color = QColorDialog.getColor(q_color)
         button = self.ui.pushButton_colorPicker
         self.color_temp = Color.from_rgb_to_factor(new_color.red(), new_color.green(), new_color.blue())
-        button.setStyleSheet("background-color: rgb({},{},{})".format(new_color.red(), new_color.green(), new_color.blue()))
+        button.setStyleSheet(
+            "background-color: rgb({},{},{})".format(new_color.red(), new_color.green(), new_color.blue()))
 
     def set_reflectance_method_combo_box_values(self):
         combo_box = self.ui.comboBox_reflectiveMethod
@@ -105,7 +107,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         text_label = self.ui.label_tranparency_value
         transparency = material.get_transparency()
         self.transparency_temp = transparency
-        scaled_value = int(self.transparency_temp*slider.maximum())
+        scaled_value = int(self.transparency_temp * slider.maximum())
         slider.setValue(scaled_value)
         text_label.setText("%.2f" % self.transparency_temp)
 
@@ -113,7 +115,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         slider = self.ui.horizontalSlider_transparency
         text_label = self.ui.label_tranparency_value
         value = slider.value()
-        self.transparency_temp = float(value)/slider.maximum()
+        self.transparency_temp = float(value) / slider.maximum()
         text_label.setText("%.2f" % self.transparency_temp)
 
     def set_reflectance_slider(self, material):
@@ -121,7 +123,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         text_label = self.ui.label_reflectance_value
         reflectance = material.get_reflectance()
         self.reflectance_temp = reflectance
-        scaled_value = int(self.reflectance_temp*slider.maximum())
+        scaled_value = int(self.reflectance_temp * slider.maximum())
         slider.setValue(scaled_value)
         text_label.setText("%.2f" % self.reflectance_temp)
 
@@ -129,7 +131,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         slider = self.ui.horizontalSlider_reflectance
         text_label = self.ui.label_reflectance_value
         value = slider.value()
-        self.reflectance_temp = float(value)/slider.maximum()
+        self.reflectance_temp = float(value) / slider.maximum()
         text_label.setText("%.2f" % self.reflectance_temp)
 
     def set_slip_coefficient_slider(self, material):
@@ -137,7 +139,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         text_label = self.ui.label_slip_coefficient
         slip_coefficient = material.get_slip_coefficient()
         self.slip_coefficient_temp = slip_coefficient
-        scaled_value = int(self.slip_coefficient_temp*slider.maximum())
+        scaled_value = int(self.slip_coefficient_temp * slider.maximum())
         slider.setValue(scaled_value)
         text_label.setText("%.2f" % self.slip_coefficient_temp)
 
@@ -145,7 +147,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         slider = self.ui.horizontalSlider_slipCoefficient
         text_label = self.ui.label_slip_coefficient
         value = slider.value()
-        self.slip_coefficient_temp = float(value)/slider.maximum()
+        self.slip_coefficient_temp = float(value) / slider.maximum()
         text_label.setText("%.2f" % self.slip_coefficient_temp)
 
     def set_imperviousness_slider(self, material):
@@ -153,7 +155,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         text_label = self.ui.label_imperviousness
         imperviousness = material.get_imperviousness()
         self.imperviousness_temp = imperviousness
-        scaled_value = int(self.imperviousness_temp *slider.maximum())
+        scaled_value = int(self.imperviousness_temp * slider.maximum())
         slider.setValue(scaled_value)
         text_label.setText("%.2f" % self.imperviousness_temp)
 
@@ -161,7 +163,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
         slider = self.ui.horizontalSlider_imperviousness
         text_label = self.ui.label_imperviousness
         value = slider.value()
-        self.imperviousness_temp = float(value)/slider.maximum()
+        self.imperviousness_temp = float(value) / slider.maximum()
         text_label.setText("%.2f" % self.imperviousness_temp)
 
     def reset_material_value(self):
@@ -183,7 +185,6 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
 
     def save_xml(self):
         material_dict = self.materials.material_dict
-        filename = self.parent.filename
         materials_xml = Element("materials")
         for name, material in material_dict.items():
             material_xml = SubElement(materials_xml, "material")
@@ -211,7 +212,10 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
     def save_xml_doc(self):
         material_dict = self.materials.material_dict
         doc = Document()
-        filename = self.parent.filename
+        file_path = self.parent.filename
+        folder = file_path.split(".")[0]
+        filename = folder.split("/")[-1]
+        create_folder(folder)
         materials_xml = doc.createElement("materials")
         doc.appendChild(materials_xml)
         for name, material in material_dict.items():
@@ -221,7 +225,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
             material_xml.appendChild(name_xml)
             name_text = doc.createTextNode(name)
             name_xml.appendChild(name_text)
-            surface_color_xml = doc.createElement( "surface_color")
+            surface_color_xml = doc.createElement("surface_color")
             material_xml.appendChild(surface_color_xml)
             red_xml = doc.createElement("red")
             surface_color_xml.appendChild(red_xml)
@@ -256,17 +260,19 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
             imperviousness_text = doc.createTextNode(str(material.get_imperviousness()))
             imperviousness_xml.appendChild(imperviousness_text)
 
-        doc.writexml( open(filename+".xml", 'w'),
-                          indent="  ",
-                          addindent="  ",
-                          newl='\n')
+        doc.writexml(open(folder + "/" + filename + ".xml", 'w'),
+                     indent="  ",
+                     addindent="  ",
+                     newl='\n')
         doc.unlink()
 
     def load_xml(self):
-        filename = self.parent.filename
+        file_path = self.parent.filename
+        folder = file_path.split(".")[0]
+        filename = folder.split("/")[-1]
         from os.path import isfile
-        if isfile(filename+".xml"):
-            dom = parse(filename+".xml")
+        if isfile(folder + "/"+filename+".xml"):
+            dom = parse(folder + "/"+filename+".xml")
             self.process_xml(dom)
         else:
             print("no xml data")
@@ -288,7 +294,7 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
             transparency_xml = material_xml.getElementsByTagName("transparency")[0]
             transparency_value = get_float_from_xml(transparency_xml)
             reflectance_method_xml = material_xml.getElementsByTagName("reflectance_method")[0]
-            reflectance_method_value= get_int_from_xml(reflectance_method_xml)
+            reflectance_method_value = get_int_from_xml(reflectance_method_xml)
             reflectance_xml = material_xml.getElementsByTagName("reflectance")[0]
             reflectance_value = get_float_from_xml(reflectance_xml)
             slip_coefficient_xml = material_xml.getElementsByTagName("slip_coefficient")[0]
@@ -304,5 +310,3 @@ class GuiMaterialBrowser(QtWidgets.QWidget):
                 material.set_slip_coefficient(slip_coefficient_value)
                 material.set_imperviousness(imperviousness_value)
         self.load_materials()
-
-

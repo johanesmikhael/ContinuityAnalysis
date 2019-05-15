@@ -136,6 +136,14 @@ class SliceAnalyzer(object):
         if self.slice_analysis:
             self.slice_analysis.save_graph()
 
+    def save_geometry(self):
+        if self.slice_analysis:
+            self.slice_analysis.save_geometry()
+
+    def save_item_materials(self):
+        if self.slice_analysis:
+            self.slice_analysis.save_item_materials()
+
     def calculate_kernel(self):
         if self.slice_analysis:
             self.slice_analysis.calculate_kernel()

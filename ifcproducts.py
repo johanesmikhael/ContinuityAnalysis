@@ -161,7 +161,7 @@ class BuildingElement(object):
         self.parent_elem = parent_elem
         self.ifcopenshell_setting = self.parent.ifcopenshell_setting
         self.ifc_instance = ifc_instance
-        self.name = ifc_instance.Name
+        self.name = ifc_instance.Name.replace(":","_")
         self.guid = ifc_instance.GlobalId
         self.is_decomposed = BuildingElement.check_ifc_is_decomposed(self.ifc_instance)
         self.children = []

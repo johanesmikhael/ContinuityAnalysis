@@ -68,6 +68,8 @@ class GuiVisualization(QtWidgets.QMainWindow):
         self.add_function_to_toolbar("Slice Analysis Toolbar", self.toggle_feature_view)
         self.add_function_to_toolbar("Slice_Graph_Toolbar", self.create_graph)
         self.add_function_to_toolbar("Slice_Graph_Toolbar", self.save_graph)
+        self.add_function_to_toolbar("Slice_Graph_Toolbar", self.save_geometry)
+        self.add_function_to_toolbar("Slice_Graph_Toolbar", self.save_material)
         self.add_function_to_toolbar("Slice_Graph_Toolbar", self.calculate_kernel)
         self.add_function_to_toolbar("Slice_Graph_Toolbar", self.generate_som)
         self.add_function_to_toolbar("Slice_Graph_Toolbar", self.toggle_path_annotation_view)
@@ -80,6 +82,12 @@ class GuiVisualization(QtWidgets.QMainWindow):
         now_str = now.strftime("%Y-%m-%d_%H%M%S")
         print(self.canvas.get_display().View.Dump(now_str+"_export_slices.png"))
         pass
+
+    def save_material(self):
+        self.slice_analyzer.save_item_materials()
+
+    def save_geometry(self):
+        self.slice_analyzer.save_geometry()
 
     def create_graph(self):
         self.slice_analyzer.create_graph()

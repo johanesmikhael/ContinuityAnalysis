@@ -171,6 +171,14 @@ class SliceBoundingBox(object):
         distance = Color.colour_distance(material1,material2)
         return distance
 
+    def get_color_transparency_distance(self, item):
+        colour1 = self.material.get_surface_colour()
+        colour2 = item.material.get_surface_colour()
+        transparency1 = self.material.get_transparency()
+        transparency2 = item.material.get_transparency()
+        squared_distance = Color.squared_colour_distance(colour1, colour2) + (transparency2-transparency2)**2
+        return pow(squared_distance, 0.5)
+
 
     @staticmethod
     def get_shape_area(shape_list):

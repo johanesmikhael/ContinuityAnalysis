@@ -22,9 +22,14 @@ import numpy as np
 import SimpSOM as sps
 import os
 import string
+import csv
+
+from OCC.TopoDS import TopoDS_Builder, TopoDS_Compound
 
 from slice_bounding_box import *
 
+from xml.etree.ElementTree import Element, SubElement, Comment, tostring
+from xml.dom.minidom import Document, parse, parseString
 
 class SliceAnalysis(object):
     def __init__(self, parent):
@@ -46,7 +51,7 @@ class SliceAnalysis(object):
         self.graph_slice_list = []
         self.in_between_graph_list = []
         self.item_labels = dict()
-        self.color_dist_offset = 0.
+        self.color_dist_offset = 0.0
         self.kernel = None
         self.prototype_selectors_index = []
         self.embedded_graph = None
@@ -55,6 +60,7 @@ class SliceAnalysis(object):
         self.init_learning_rate = 0.01
         self.num_epoch = 100000
         self.clusters = None
+        self.label_materials = dict()
 
     def get_parent(self):
         return self._parent
@@ -207,16 +213,115 @@ class SliceAnalysis(object):
         self.create_som_graph()
         self.write_data()
 
+    def save_geometry(self):
+        if len(self.item_labels) == 0:
+            print("the item is not labeled yet")
+            return
+        file_path = self.get_parent().get_visualizer().parent.filename
+        folder = file_path.split(".")[0]
+        create_folder(folder)
+        # iterating slices
+        for i in range(0, len(self.bounded_item_slice_list)):
+            for a, side_slice in enumerate(self.bounded_item_slice_list[i]):
+                for b, item in enumerate(side_slice):
+                    label = self.item_labels[item]
+                    topods = item.topods
+                    name = folder + "/" + label + ".stp"
+                    print("---------label")
+                    print(label)
+                    write_step_file(topods, name)
+
+    def save_item_materials(self):
+        file_path = self.get_parent().get_visualizer().parent.filename
+        folder = file_path.split(".")[0]
+        filename = folder.split("/")[-1]+"-mat_dict"
+        create_folder(folder)
+        doc = Document()
+        object_materials_xml = doc.createElement("material_dict")
+        doc.appendChild(object_materials_xml)
+        for label in self.item_labels.values():
+            print("test")
+            print(label)
+            object_material_xml = doc.createElement("object_material")
+            object_materials_xml.appendChild(object_material_xml)
+            # pair = [label, self.label_materials[label]]
+            object_xml = doc.createElement("object")
+            object_material_xml.appendChild(object_xml)
+            object_text = doc.createTextNode(label)
+            object_xml.appendChild(object_text)
+            material_xml = doc.createElement("material")
+            object_material_xml.appendChild(material_xml)
+            material = self.label_materials[label]
+            print(material)
+            material_text = doc.createTextNode(self.label_materials[label])
+            material_xml.appendChild(material_text)
+
+        doc.writexml(open(folder + "/" + filename + ".xml", 'w'),
+                     indent="  ",
+                     addindent="  ",
+                     newl='\n')
+        doc.unlink()
+        print("finish save materials")
+
     def save_graph(self):
-        file_name = self.get_parent().get_visualizer().parent.filename.split("/")[-1].split(".")[0]
-        print(file_name)
+        file_path = self.get_parent().get_visualizer().parent.filename
+        folder = file_path.split(".")[0]
+        filename = folder.split("/")[-1]
+        create_folder(folder)
+        graph_names = []
         for i, graph in enumerate(self.temporal_graph_list):
             if not nx.is_empty(graph):
                 h = nx.relabel_nodes(graph, self.item_labels)
-                dir = os.getcwd()
-                name = dir + "\export\\"+file_name+"-graph-%d.graphml" % i
+                graph_name = filename+"-%d.graphml" % i
+                name = folder + "/"+ graph_name
                 nx.write_graphml(h, name)
+                #write item in xml
+                node_list = list(h)
+                node_doc = Document()
+                nodes_xml = node_doc.createElement("nodes")
+                node_doc.appendChild(nodes_xml)
+                count_xml = node_doc.createElement("count")
+                nodes_xml.appendChild(count_xml)
+                count_text = node_doc.createTextNode(str(i))
+                count_xml.appendChild(count_text)
+                for node in node_list:
+                    node_xml = node_doc.createElement("node")
+                    nodes_xml.appendChild(node_xml)
+                    node_xml_text = node_doc.createTextNode(node)
+                    node_xml.appendChild(node_xml_text)
+                graph_name_xml = filename + "-%d-graph.xml" % i
+                graph_names.append(graph_name_xml)
+                node_doc.writexml(open(folder + "/" + graph_name_xml, 'w'),
+                             indent="  ",
+                             addindent="  ",
+                             newl='\n')
+                node_doc.unlink()
+        doc = Document()
+        data_xml = doc.createElement("data")
+        graphs_xml = doc.createElement("graphs")
+        doc.appendChild(graphs_xml)
+        graphs_xml.appendChild(data_xml)
+        temporal_width_xml = doc.createElement("temporal_width")
+        data_xml.appendChild(temporal_width_xml)
+        temporal_width_text = doc.createTextNode(str(self.temporal_width))
+        temporal_width_xml.appendChild(temporal_width_text)
+        slicing_distance_xml = doc.createElement("slicing_distance")
+        data_xml.appendChild(slicing_distance_xml)
+        slicing_distance = self.get_parent().get_visualizer().parent.section_distance
+        slicing_distance_text = doc.createTextNode(str(slicing_distance))
+        slicing_distance_xml.appendChild(slicing_distance_text)
+        for graph_name in graph_names:
+            graph_xml = doc.createElement("graph")
+            graphs_xml.appendChild(graph_xml)
+            graph_xml_text = doc.createTextNode(graph_name)
+            graph_xml.appendChild(graph_xml_text)
+        doc.writexml(open(folder + "/" + filename + "-init.xml", 'w'),
+                     indent="  ",
+                     addindent="  ",
+                     newl='\n')
+        doc.unlink()
         print("finish save graph")
+
 
     def write_data(self):
         for i, graph in enumerate(self.temporal_graph_list):
@@ -259,8 +364,11 @@ class SliceAnalysis(object):
                 self.annotations.append([topods, ais_object.GetHandle()])
 
     def create_graph(self):
+        file_path = self.get_parent().get_visualizer().parent.filename
+        folder = file_path.split(".")[0]
+        filename = folder.split("/")[-1]
         for i in range(0, len(self.bounded_item_slice_list)):
-            self.create_slice_graph(i)
+            self.create_slice_graph(i, filename)
             self.create_in_between_graph(i)
         self.construct_temporal_graph()
         print("finish creating graph")
@@ -278,7 +386,6 @@ class SliceAnalysis(object):
                 nx.draw_networkx_labels(h, pos)
         plt.show()'''
 
-
     def toggle_path_annotation_view(self):
         display = self.get_parent().get_visualizer().canvas.get_display()
         if self.is_path_annotation_visible:
@@ -289,14 +396,17 @@ class SliceAnalysis(object):
                 display.Context.Display(item[1])
         self.is_path_annotation_visible = not self.is_path_annotation_visible
 
-    def create_slice_graph(self, i):
+    def create_slice_graph(self, i, filename):
         print("graph for %d slice" % i)
         G = nx.Graph()
         print(G)
         for a, side_slice in enumerate(self.bounded_item_slice_list[i]):
             for b, item in enumerate(side_slice):
-                self.item_labels[item] = type(item.element).__name__ + ("-i%d" % i) + ("a%d" % a) + \
+                label = filename+"-"+type(item.element).__name__ + ("-i%d" % i) + ("a%d" % a) + \
                                          ("b%d-%s" % (b, item.element.name))
+                self.item_labels[item] = label
+                self.label_materials[label] = item.material.name
+                #the material.name seems to be None for some item. need to check
                 G.add_node(item)
                 is_connected = None
                 closest_item = None
@@ -318,10 +428,11 @@ class SliceAnalysis(object):
                                                 closest_item = test_item
                             else:  # if connected
                                 is_connected = is_connect
-                                color_distance = item.get_color_distance(test_item) + self.color_dist_offset
+                                color_distance = item.get_color_transparency_distance(test_item)\
+                                                 + self.color_dist_offset
                                 G.add_edge(item, test_item, weight=color_distance)
                 if not is_connected and a == 4:  # only features
-                    color_distance = item.get_color_distance(closest_item) + self.color_dist_offset
+                    color_distance = item.get_color_transparency_distance(closest_item) + self.color_dist_offset
                     G.add_edge(item, closest_item, weight=color_distance)
         self.graph_slice_list.append(G)
 
@@ -340,7 +451,8 @@ class SliceAnalysis(object):
             for bounded_item2 in item_list2:
                 is_adjacent = bounded_item1.is_adjacent_horizontal(bounded_item2)
                 if is_adjacent:
-                    color_distance = bounded_item1.get_color_distance(bounded_item2) + self.color_dist_offset
+                    color_distance = bounded_item1.get_color_transparency_distance(bounded_item2)\
+                                     + self.color_dist_offset
                     graph.add_edge(bounded_item1, bounded_item2, weight=color_distance)
 
     def construct_temporal_graph(self):
@@ -354,6 +466,19 @@ class SliceAnalysis(object):
                     graphs.append(in_between_graph)
             temporal_graph = nx.compose_all(graphs)
             self.temporal_graph_list.append(temporal_graph)
+
+    def save_temporal_sequence(self):
+        for i in range(self.temporal_width, len(self.graph_slice_list) - self.temporal_width):
+            graphs = []
+            for k in range(-self.temporal_width, self.temporal_width + 1):
+                graph = self.graph_slice_list[i + k]
+
+                # graphs.append(graph)
+                # if k < self.temporal_width:
+                #     in_between_graph = self.in_between_graph_list[i + k]
+                #     graphs.append(in_between_graph)
+            # temporal_graph = nx.compose_all(graphs)
+            # self.temporal_graph_list.append(temporal_graph)
 
     def toggle_left_surface_view(self):
         if self.is_left_surface_visible:

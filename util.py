@@ -7,6 +7,11 @@ from xml.dom import minidom
 from PyQt5.QtGui import QColor
 from colorsys import *
 
+import os
+from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
+from OCC.Interface import Interface_Static_SetCVal
+from OCC.IFSelect import IFSelect_RetDone
+
 
 def prettify(elem):
     """Return a pretty-printed XML string for the Element.
@@ -29,6 +34,43 @@ def get_int_from_xml(node):
     float_value = get_float_from_xml(node)
     return int(float_value)
 
+
+def write_step_file(a_shape, filename, application_protocol="AP203"):
+    """ exports a shape to a STEP file
+    a_shape: the topods_shape to export (a compound, a solid etc.)
+    filename: the filename
+    application protocol: "AP203" or "AP214"
+    """
+    # a few checks
+    if a_shape.IsNull():
+        raise AssertionError("Shape %s is null." % a_shape)
+    if application_protocol not in ["AP203", "AP214IS"]:
+        raise AssertionError("application_protocol must be either AP203 or AP214IS. You passed %s." % application_protocol)
+    if os.path.isfile(filename):
+        print("Warning: %s file already exists and will be replaced" % filename)
+    # creates and initialise the step exporter
+    step_writer = STEPControl_Writer()
+    Interface_Static_SetCVal("write.step.schema", application_protocol)
+
+    # transfer shapes and write file
+    step_writer.Transfer(a_shape, STEPControl_AsIs)
+    status = step_writer.Write(filename)
+
+    if not status == IFSelect_RetDone:
+        raise AssertionError("Error while writing shape to STEP file.")
+    if not os.path.isfile(filename):
+        raise AssertionError("File %s was not saved to filesystem." % filename)
+
+
+def create_folder(folder):
+    try:
+        os.mkdir(folder)
+    except OSError:
+        print("Creation of the directory %s failed" % folder)
+        return False
+    else:
+        print("Successfully created the directory %s " % folder)
+        return True
 
 class Color:
     def __init__(self):
@@ -74,14 +116,19 @@ class Color:
 
     @staticmethod
     def colour_distance(rgb_tuple1, rgb_tuple2):
-        print("start calc distance")
+        squared_distance = Color.squared_colour_distance(rgb_tuple1, rgb_tuple2)
+        return pow(squared_distance, 0.5)
+
+    @staticmethod
+    def squared_colour_distance(rgb_tuple1, rgb_tuple2):
+        print("start calc squared distance")
         print(rgb_tuple1)
         print(rgb_tuple2)
         squared_distance = (rgb_tuple2[0] - rgb_tuple1[0]) ** 2 + \
                            (rgb_tuple2[1] - rgb_tuple1[1]) ** 2 + \
                            (rgb_tuple2[2] - rgb_tuple1[2]) ** 2
         print(squared_distance)
-        return pow(squared_distance, 0.5)
+        return squared_distance
 
 
 class ColorInterpolation(object):

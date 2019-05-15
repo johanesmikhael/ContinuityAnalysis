@@ -351,9 +351,9 @@ class GuiMainWindow(QtWidgets.QMainWindow):
     def create_slice_box(self):
         if len(self.section_planes) > 0:
             self.is_show_boxes = True
-            i = 0
             display = self.canvas.get_display()
-            for plane in self.section_planes:
+            for i in range(0, len(self.section_planes)-1):
+                plane = self.section_planes[i]
                 vector = plane[5].Normalized().Scaled(self.section_distance)
                 section_slice = BRepPrimAPI_MakePrism(plane[1], vector).Shape()
                 print(section_slice)
@@ -361,7 +361,6 @@ class GuiMainWindow(QtWidgets.QMainWindow):
                 bounding_box = Bnd_Box()
                 brepbndlib_Add(section_slice, bounding_box)
                 self.section_boxes.append((i, section_slice, section_slice_display, plane[3], bounding_box))
-                i += 1
             return True
         else:
             return False

@@ -46,7 +46,7 @@ class Material(object):
                 self.surface_colour = (0.125, 0.125, 0.125)
                 self.transparency = 0
         else:
-            self.name = None
+            self.name = "default_material"
 
     def get_surface_colour(self):
         if self.surface_colour:
