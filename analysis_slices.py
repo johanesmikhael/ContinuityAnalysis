@@ -31,6 +31,7 @@ from slice_bounding_box import *
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 from xml.dom.minidom import Document, parse, parseString
 
+
 class SliceAnalysis(object):
     def __init__(self, parent):
         self._parent = parent
@@ -161,6 +162,11 @@ class SliceAnalysis(object):
         # k_train = sp_kernel.fit_transform(grakel_graphs)
         self.kernel = wl_kernel.fit_transform(grakel_graphs)
         print(self.kernel)
+        # fig = pyplot.figure(figsize=(5, 5))
+        # pyplot.imshow(self.kernel,
+        #              cmap="Greys",
+        #              interpolation="none")
+        # pyplot.show()
         self.select_prototype_selectors()
         self.embed_graph()
 
@@ -180,23 +186,45 @@ class SliceAnalysis(object):
     def select_prototype_selectors(self):
         for i in range(0, 9):
             if i == 0:
-                init_index = int(len(self.temporal_graph_list) / 2.0)
+                init_index = self.get_median(self.kernel)
                 self.prototype_selectors_index.append(init_index)
             else:
-                row = self.kernel[self.prototype_selectors_index[-1]]
-                copy_row = row.copy()
+                size = len(self.kernel)
+                row = np.ndarray(shape=(size,), dtype=float)
                 '''for k in self.prototype_selectors_index:
                     copy_row.put(k, 1.0)'''
                 for j in range(0, len(self.kernel)):
-                    sum = 0
-                    for index in self.prototype_selectors_index:
-                        selected_row = self.kernel[index]
-                        sum += selected_row[j]
-                    copy_row.put(j, sum)
-                furthest_index = copy_row.argmin()
+                    max = 1.0
+                    if j not in self.prototype_selectors_index:
+                        iterator = 0
+                        for index in self.prototype_selectors_index:
+                            selected_row = self.kernel[index]
+                            if iterator == 0:
+                                max = selected_row[j]
+                            elif max < selected_row[j]:
+                                max = selected_row[j]
+                            iterator += 1
+                    row.put(j, max)
+                print(row)
+                furthest_index = row.argmin()
+                print(furthest_index)
                 self.prototype_selectors_index.append(furthest_index)
+                print(self.prototype_selectors_index)
         print("selected index")
         print(self.prototype_selectors_index)
+
+    @staticmethod
+    def get_median(graph_kernel):
+        distances = np.ndarray(shape=(len(graph_kernel),))
+        size = len(graph_kernel)
+        for i in range(0, size):
+            sum = 0.0
+            for j in range(0, size):
+                if i != j:
+                    sum += graph_kernel[j][i]
+            distances.put(i, sum)
+        index = distances.argmin()
+        return index
 
     def generate_som(self):
         labels = []
@@ -234,7 +262,7 @@ class SliceAnalysis(object):
     def save_item_materials(self):
         file_path = self.get_parent().get_visualizer().parent.filename
         folder = file_path.split(".")[0]
-        filename = folder.split("/")[-1]+"-mat_dict"
+        filename = folder.split("/")[-1] + "-mat_dict"
         create_folder(folder)
         doc = Document()
         object_materials_xml = doc.createElement("material_dict")
@@ -272,10 +300,10 @@ class SliceAnalysis(object):
         for i, graph in enumerate(self.temporal_graph_list):
             if not nx.is_empty(graph):
                 h = nx.relabel_nodes(graph, self.item_labels)
-                graph_name = filename+"-%d.graphml" % i
-                name = folder + "/"+ graph_name
+                graph_name = filename + "-%d.graphml" % i
+                name = folder + "/" + graph_name
                 nx.write_graphml(h, name)
-                #write item in xml
+                # write item in xml
                 node_list = list(h)
                 node_doc = Document()
                 nodes_xml = node_doc.createElement("nodes")
@@ -292,9 +320,9 @@ class SliceAnalysis(object):
                 graph_name_xml = filename + "-%d-graph.xml" % i
                 graph_names.append(graph_name_xml)
                 node_doc.writexml(open(folder + "/" + graph_name_xml, 'w'),
-                             indent="  ",
-                             addindent="  ",
-                             newl='\n')
+                                  indent="  ",
+                                  addindent="  ",
+                                  newl='\n')
                 node_doc.unlink()
         doc = Document()
         data_xml = doc.createElement("data")
@@ -321,7 +349,6 @@ class SliceAnalysis(object):
                      newl='\n')
         doc.unlink()
         print("finish save graph")
-
 
     def write_data(self):
         for i, graph in enumerate(self.temporal_graph_list):
@@ -402,11 +429,11 @@ class SliceAnalysis(object):
         print(G)
         for a, side_slice in enumerate(self.bounded_item_slice_list[i]):
             for b, item in enumerate(side_slice):
-                label = filename+"-"+type(item.element).__name__ + ("-i%d" % i) + ("a%d" % a) + \
-                                         ("b%d-%s" % (b, item.element.name))
+                label = filename + "-" + type(item.element).__name__ + ("-i%d" % i) + ("a%d" % a) + \
+                        ("b%d-%s" % (b, item.element.name))
                 self.item_labels[item] = label
                 self.label_materials[label] = item.material.name
-                #the material.name seems to be None for some item. need to check
+                # the material.name seems to be None for some item. need to check
                 G.add_node(item)
                 is_connected = None
                 closest_item = None
@@ -428,7 +455,7 @@ class SliceAnalysis(object):
                                                 closest_item = test_item
                             else:  # if connected
                                 is_connected = is_connect
-                                color_distance = item.get_color_transparency_distance(test_item)\
+                                color_distance = item.get_color_transparency_distance(test_item) \
                                                  + self.color_dist_offset
                                 G.add_edge(item, test_item, weight=color_distance)
                 if not is_connected and a == 4:  # only features
@@ -451,7 +478,7 @@ class SliceAnalysis(object):
             for bounded_item2 in item_list2:
                 is_adjacent = bounded_item1.is_adjacent_horizontal(bounded_item2)
                 if is_adjacent:
-                    color_distance = bounded_item1.get_color_transparency_distance(bounded_item2)\
+                    color_distance = bounded_item1.get_color_transparency_distance(bounded_item2) \
                                      + self.color_dist_offset
                     graph.add_edge(bounded_item1, bounded_item2, weight=color_distance)
 

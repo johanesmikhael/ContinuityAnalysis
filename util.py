@@ -11,6 +11,9 @@ import os
 from OCC.STEPControl import STEPControl_Writer, STEPControl_AsIs
 from OCC.Interface import Interface_Static_SetCVal
 from OCC.IFSelect import IFSelect_RetDone
+import networkx as nx
+from matplotlib import pyplot, patches
+import numpy as np
 
 
 def prettify(elem):
@@ -129,6 +132,7 @@ class Color:
                            (rgb_tuple2[2] - rgb_tuple1[2]) ** 2
         print(squared_distance)
         return squared_distance
+
 
 
 class ColorInterpolation(object):
